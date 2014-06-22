@@ -5,10 +5,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import me.heldplayer.chat.framework.ConnectionState;
 import me.heldplayer.chat.framework.ServerConnection;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.packet.ChatPacket;
+import me.heldplayer.chat.framework.packet.ConnectionState;
 
 /**
  * Sent when a server disconnects, indicates that an attempt to reconnect should

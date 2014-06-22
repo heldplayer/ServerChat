@@ -10,7 +10,8 @@ import java.util.LinkedList;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.config.ServerEntry;
 import me.heldplayer.chat.framework.packet.ChatPacket;
-import me.heldplayer.chat.framework.packet.auth.PacketDisconnect;
+import me.heldplayer.chat.framework.packet.ConnectionState;
+import me.heldplayer.chat.framework.packet.PacketDisconnect;
 
 public class ServerConnection {
 
@@ -20,6 +21,7 @@ public class ServerConnection {
     private ConnectionState state = ConnectionState.DISCONNECTED;
 
     public final ConnectionsList connectionsList;
+    public ServerEntry entry;
     RunnableReadWrite runnable;
     Thread thread;
 
@@ -30,16 +32,41 @@ public class ServerConnection {
     public ServerConnection(ConnectionsList connectionsList, Socket socket) throws IOException {
         this.connectionsList = connectionsList;
         this.socket = socket;
-        this.in = new DataInputStream(this.socket.getInputStream());
-        this.out = new DataOutputStream(this.socket.getOutputStream());
         this.state = ConnectionState.AUTHENTICATING;
+
+        this.setInOut(this.socket);
 
         this.startThread();
     }
 
     public ServerConnection(ConnectionsList connectionsList, ServerEntry entry) {
-        // TODO: attempt to connect
         this.connectionsList = connectionsList;
+
+        this.state = ConnectionState.CONNECTING;
+        this.entry = entry;
+    }
+
+    public void attemptConnect() {
+        Thread thread = new Thread(new RunnableAttemptConnect(connectionsList, this), "Connecting Thread");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    protected void setInOut(Socket socket) throws IOException {
+        if (this.in != null) {
+            try {
+                this.in.close();
+            }
+            catch (IOException e) {}
+        }
+        if (this.out != null) {
+            try {
+                this.out.close();
+            }
+            catch (IOException e) {}
+        }
+        this.in = new DataInputStream(socket.getInputStream());
+        this.out = new DataOutputStream(socket.getOutputStream());
     }
 
     public void startThread() {
@@ -55,11 +82,13 @@ public class ServerConnection {
     }
 
     public void setState(ConnectionState state) throws AuthenticationException {
-        if (state == ConnectionState.AUTHENTICATED && this.state != ConnectionState.AUTHENTICATING) {
-            throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
-        }
-        if (state == ConnectionState.CONNECTED && this.state != ConnectionState.AUTHENTICATED) {
-            throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
+        if (state != ConnectionState.DISCONNECTED) {
+            if (state == ConnectionState.AUTHENTICATED && this.state != ConnectionState.AUTHENTICATING) {
+                throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
+            }
+            if (state == ConnectionState.CONNECTED && this.state != ConnectionState.AUTHENTICATED) {
+                throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
+            }
         }
         this.state = state;
     }

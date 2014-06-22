@@ -1,14 +1,12 @@
 
-package me.heldplayer.chat.framework;
+package me.heldplayer.chat.framework.packet;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 
-import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.auth.PacketAuthChallenge;
 import me.heldplayer.chat.framework.packet.auth.PacketAuthChallengeResponse;
 import me.heldplayer.chat.framework.packet.auth.PacketAuthenticationComplete;
-import me.heldplayer.chat.framework.packet.auth.PacketDisconnect;
 
 public enum ConnectionState {
 

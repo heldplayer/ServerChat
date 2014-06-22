@@ -6,11 +6,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.ConnectionState;
 import me.heldplayer.chat.framework.ServerConnection;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
+import me.heldplayer.chat.framework.packet.ConnectionState;
 
 /**
  * Sent in response to {@link PacketAuthChallenge}, sends a different challenge

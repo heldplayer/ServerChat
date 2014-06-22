@@ -6,11 +6,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.ConnectionState;
 import me.heldplayer.chat.framework.ServerConnection;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
+import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.util.KeyUtils;
 
 /**
@@ -61,7 +61,7 @@ public class PacketAuthChallenge extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
-        if (connection.getState() == ConnectionState.AUTHENTICATING) {
+        if (connection.getState() == ConnectionState.CONNECTING) {
             boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
             if (verified) {
                 try {
