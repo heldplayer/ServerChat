@@ -1,0 +1,37 @@
+Stop trying to chat to me on IRC, steam and FB, use twitch chat instead
+
+
+Client with the mod connects to server with the mod
+=> Client stores that the server has the mod installed
+
+Client connects to different server
+=> Sends that the first server has the mod
+=> Server attempts to contact the server
+=> If successfull, connection is saved, otherwise client gets told the server is invalid
+
+
+Server:
+servers.json - List of servers to connect to (IP + UUID)
+
+
+Client:
+servers.json - List of servers that have the mod installed (IP + UUID)
+Has chat window to chat to channels + users
+
+
+Notes:
+Don't use Netty for inter-server comm to allow the code to be used for multiple platforms (Forge, bukkit, etc...)
+
+Authentication:
+If a server claims it is authenticated to perform actions to the network, it checks with a main database/site
+to check if the claim is legit
+
+
+When a server first gets this mod installed, a UUID is made, together with a KeyPair. The UUID and public key are
+sent to the central repository.
+
+When a server tries to connect to a different server, they both request the UUID and a random number and its signature
+The other server requests the public key of the server with the UUID from the central repository and verifies that
+the signature of matches.
+
+If it doesn't match, the connection is revoked, otherwise the connection is instantiated and the servers share details

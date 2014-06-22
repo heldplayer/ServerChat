@@ -1,0 +1,17 @@
+[
+{
+  "modid" : "serverchat",
+  "name" : "ServerChat",
+  "version" : "@VERSION@",
+  "credits" : "",
+  "authors": [
+    "heldplayer"
+  ],
+  "description": "Connects servers to allow inter-server communications",
+  "updateUrl" : "",
+  "url" : "",
+  "requiredMods": [
+    "HeldCore"
+  ]
+}
+]
