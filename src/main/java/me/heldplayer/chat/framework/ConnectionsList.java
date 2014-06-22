@@ -27,21 +27,22 @@ public class ConnectionsList {
     public void startListening() throws IOException {
         InetAddress adress = null;
 
-        String host = config.getHost();
-        int port = config.getPort();
+        String host = this.config.getHost();
+        int port = this.config.getPort();
         if (host != null && !host.isEmpty()) {
             InetAddress.getByName(host);
         }
 
         this.serverSocket = new ServerSocket(port, 0, adress);
 
-        thread = new Thread(runnable = new RunnableConnection(serverSocket), "ServerChat connection listener");
-        thread.start();
+        this.thread = new Thread(this.runnable = new RunnableConnection(this, this.serverSocket), "ServerChat connection listener");
+        this.thread.start();
     }
 
     public void stopListening() {
         Thread thread = new Thread(new Runnable() {
             @Override
+            @SuppressWarnings("deprecation")
             public void run() {
                 ConnectionsList.this.runnable.running = false;
                 int count = 500;

@@ -15,11 +15,11 @@ public final class KeyUtils {
     private KeyUtils() {}
 
     public static byte[] getSignature(PrivateKey key, String input) {
-        return getSignature(key, new ReaderInputStream(new StringReader(input)));
+        return KeyUtils.getSignature(key, new ReaderInputStream(new StringReader(input)));
     }
 
     public static boolean verifySignature(PublicKey key, String input, byte[] sig) {
-        return verifySignature(key, new ReaderInputStream(new StringReader(input)), sig);
+        return KeyUtils.verifySignature(key, new ReaderInputStream(new StringReader(input)), sig);
     }
 
     public static byte[] getSignature(PrivateKey key, InputStream input) {

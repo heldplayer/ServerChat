@@ -8,18 +8,21 @@ import java.net.Socket;
 public class RunnableConnection implements Runnable {
 
     boolean running;
-    private ServerSocket serverSocket;
+    private final ServerSocket serverSocket;
+    private final ConnectionsList connectionsList;
 
-    RunnableConnection(ServerSocket socket) {
-        running = true;
+    RunnableConnection(ConnectionsList connectionsList, ServerSocket socket) {
+        this.running = true;
         this.serverSocket = socket;
+        this.connectionsList = connectionsList;
     }
 
     @Override
     public void run() {
-        while (running) {
+        while (this.running) {
             try {
-                Socket socket = serverSocket.accept();
+                Socket socket = this.serverSocket.accept();
+                ServerConnection connection = new ServerConnection(socket);
 
                 Thread.sleep(10L);
             }

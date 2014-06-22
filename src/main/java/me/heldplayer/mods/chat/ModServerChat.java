@@ -63,7 +63,7 @@ public class ModServerChat extends SpACoreMod {
 
     @Override
     public SpACoreProxy getProxy() {
-        return proxy;
+        return ModServerChat.proxy;
     }
 
 }

@@ -30,6 +30,7 @@ to check if the claim is legit
 When a server first gets this mod installed, a UUID is made, together with a KeyPair. The UUID and public key are
 sent to the central repository.
 
+!! The connecting server initiates the request
 When a server tries to connect to a different server, they both request the UUID and a random number and its signature
 The other server requests the public key of the server with the UUID from the central repository and verifies that
 the signature of matches.

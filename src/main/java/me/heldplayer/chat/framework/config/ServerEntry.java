@@ -10,7 +10,7 @@ public final class ServerEntry {
     private UUID uuid;
 
     public String getIp() {
-        return ip;
+        return this.ip;
     }
 
     public void setIp(String ip) {
@@ -18,7 +18,7 @@ public final class ServerEntry {
     }
 
     public int getPort() {
-        return port;
+        return this.port;
     }
 
     public void setPort(int port) {
@@ -26,7 +26,7 @@ public final class ServerEntry {
     }
 
     public UUID getUuid() {
-        return uuid;
+        return this.uuid;
     }
 
     public void setUuid(UUID uuid) {

@@ -1,36 +1,18 @@
 
 package me.heldplayer.chat.framework.packet;
 
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-public class ChatPacket {
+import me.heldplayer.chat.framework.ServerConnection;
 
-    private static HashMap<String, Class<? extends ChatPacket>> namesToPackets = new HashMap<String, Class<? extends ChatPacket>>();
+public abstract class ChatPacket {
 
-    public static void registerPacket(String name, Class<? extends ChatPacket> clazz) {
-        if (namesToPackets.containsKey(name)) {
-            throw new IllegalArgumentException(String.format("%s is already registered for %s when trying to register it as %s", namesToPackets.get(name), name, clazz));
-        }
+    public abstract void write(DataOutputStream out) throws IOException;
 
-        namesToPackets.put(name, clazz);
-    }
+    public abstract void read(DataInputStream in) throws IOException;
 
-    public static ChatPacket createPacket(String name) {
-        Class<? extends ChatPacket> clazz = namesToPackets.get(name);
-
-        if (clazz == null) {
-            return null;
-        }
-
-        try {
-            Constructor<? extends ChatPacket> constructor = clazz.getDeclaredConstructor();
-            return constructor.newInstance();
-        }
-        catch (Throwable e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    public abstract void onPacket(ServerConnection connection);
 
 }

@@ -22,9 +22,9 @@ public class ConfigurationProvider implements IServerConfiguration {
 
     static {
         try {
-            keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
+            ConfigurationProvider.keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-            keyGen.initialize(1024, random);
+            ConfigurationProvider.keyGen.initialize(1024, random);
         }
         catch (Throwable e) {
             throw new RuntimeException("Failled getting KeyPairGenerator", e);
@@ -36,15 +36,15 @@ public class ConfigurationProvider implements IServerConfiguration {
     @Override
     public void load(File file) {
         try {
-            configuration = gson.fromJson(new FileReader(file), ServerConfiguration.class);
+            this.configuration = ConfigurationProvider.gson.fromJson(new FileReader(file), ServerConfiguration.class);
         }
         catch (IOException e) {
             throw new RuntimeException("Failed reading configuration", e);
         }
 
-        if (configuration.getKeyPair() == null) {
+        if (this.configuration.getKeyPair() == null) {
             System.out.println("Generated KeyPair");
-            configuration.setKeyPair(keyGen.generateKeyPair());
+            this.configuration.setKeyPair(ConfigurationProvider.keyGen.generateKeyPair());
         }
     }
 
@@ -53,7 +53,7 @@ public class ConfigurationProvider implements IServerConfiguration {
         if (!file.exists()) {
             try {
                 file.createNewFile();
-                gson.toJson(gson.toJsonTree(configuration), new JsonWriter(new FileWriter(file)));
+                ConfigurationProvider.gson.toJson(ConfigurationProvider.gson.toJsonTree(this.configuration), new JsonWriter(new FileWriter(file)));
             }
             catch (IOException e) {
                 throw new RuntimeException("Failed saving configuration", e);
@@ -63,22 +63,22 @@ public class ConfigurationProvider implements IServerConfiguration {
 
     @Override
     public UUID getServerUUID() {
-        return configuration.getUuid();
+        return this.configuration.getUuid();
     }
 
     @Override
     public ServerEntry[] getServers() {
-        return configuration.getServerEntries();
+        return this.configuration.getServerEntries();
     }
 
     @Override
     public String getHost() {
-        return configuration.getHost();
+        return this.configuration.getHost();
     }
 
     @Override
     public int getPort() {
-        return configuration.getPort();
+        return this.configuration.getPort();
     }
 
     @Override

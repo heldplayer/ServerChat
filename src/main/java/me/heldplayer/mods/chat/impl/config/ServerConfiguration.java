@@ -22,7 +22,7 @@ public class ServerConfiguration {
     KeyPair keyPair;
 
     public UUID getUuid() {
-        return uuid;
+        return this.uuid;
     }
 
     public void setUuid(UUID uuid) {
@@ -30,7 +30,7 @@ public class ServerConfiguration {
     }
 
     public ServerEntry[] getServerEntries() {
-        return serverEntries;
+        return this.serverEntries;
     }
 
     public void setServerEntries(ServerEntry[] serverEntries) {
@@ -38,7 +38,7 @@ public class ServerConfiguration {
     }
 
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public void setHost(String host) {
@@ -46,7 +46,7 @@ public class ServerConfiguration {
     }
 
     public int getPort() {
-        return port;
+        return this.port;
     }
 
     public void setPort(int port) {
@@ -57,7 +57,7 @@ public class ServerConfiguration {
     }
 
     public KeyPair getKeyPair() {
-        return keyPair;
+        return this.keyPair;
     }
 
     public void setKeyPair(KeyPair keyPair) {
