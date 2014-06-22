@@ -25,33 +25,32 @@ public class RunnableAttemptConnect implements Runnable {
     public void run() {
         try {
             this.connection.setState(ConnectionState.CONNECTING);
-        }
-        catch (AuthenticationException e) {}
 
-        try {
-            if (this.connection.entry != null) {
-                String address = this.connection.entry.getIp();
-                int port = this.connection.entry.getPort();
-                Socket socket = new Socket(address, port);
-                this.connection.setInOut(socket);
-                try {
+            try {
+                if (this.connection.entry != null) {
+                    String address = this.connection.entry.getIp();
+                    int port = this.connection.entry.getPort();
+                    Socket socket = new Socket(address, port);
+                    this.connection.setInOut(socket);
                     this.connection.setState(ConnectionState.AUTHENTICATING);
+                    UUID uuid = this.connectionsList.getConfiguration().getServerUUID();
+                    String challenge = KeyUtils.getRandomChallenge();
+                    byte[] signature = KeyUtils.getSignature(this.connection.connectionsList.getConfiguration().getPrivateKey(), challenge);
+                    this.connection.addPacket(new PacketAuthChallenge(uuid, challenge, signature));
+                    return;
                 }
-                catch (AuthenticationException e) {}
-                UUID uuid = this.connectionsList.getConfiguration().getServerUUID();
-                String challenge = KeyUtils.getRandomChallenge();
-                byte[] signature = KeyUtils.getSignature(connection.connectionsList.getConfiguration().getPrivateKey(), challenge);
-                connection.addPacket(new PacketAuthChallenge(uuid, challenge, signature));
-                return;
             }
-        }
-        catch (UnknownHostException e) {}
-        catch (IOException e) {}
+            catch (UnknownHostException e) {
+                this.connection.disconnect(null);
+            }
+            catch (IOException e) {
+                this.connection.disconnect(null);
+            }
 
-        try {
-            connection.setState(ConnectionState.DISCONNECTED);
+            this.connection.setState(ConnectionState.DISCONNECTED);
         }
-        catch (AuthenticationException e) {}
+        catch (AuthenticationException e) {
+            this.connection.disconnect("Error connecting: " + e.getMessage());
+        }
     }
-
 }

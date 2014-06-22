@@ -13,6 +13,8 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartedEvent;
+import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
 @Mod(modid = Objects.MOD_ID, name = Objects.MOD_NAME)
 public class ModServerChat extends SpACoreMod {
@@ -64,6 +66,16 @@ public class ModServerChat extends SpACoreMod {
     @Override
     public SpACoreProxy getProxy() {
         return ModServerChat.proxy;
+    }
+
+    @EventHandler
+    public void serverStarted(FMLServerStartedEvent event) {
+        proxy.initializeServerConnection();
+    }
+
+    @EventHandler
+    public void serverStopping(FMLServerStoppingEvent event) {
+        proxy.closeServerConnection();
     }
 
 }

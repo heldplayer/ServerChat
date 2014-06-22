@@ -44,10 +44,12 @@ public class ServerConnection {
 
         this.state = ConnectionState.CONNECTING;
         this.entry = entry;
+
+        this.attemptConnect();
     }
 
     public void attemptConnect() {
-        Thread thread = new Thread(new RunnableAttemptConnect(connectionsList, this), "Connecting Thread");
+        Thread thread = new Thread(new RunnableAttemptConnect(this.connectionsList, this), "Connecting Thread");
         thread.setDaemon(true);
         thread.start();
     }
@@ -98,8 +100,10 @@ public class ServerConnection {
     }
 
     public void disconnect(String reason) {
-        this.addPacket(new PacketDisconnect(reason));
+        if (reason != null) {
+            this.addPacket(new PacketDisconnect(reason));
+        }
         this.disconnecting = true;
+        this.connectionsList.removeConnection(this);
     }
-
 }

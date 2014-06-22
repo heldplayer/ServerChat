@@ -28,7 +28,7 @@ public class PacketServerCredentials extends ChatPacket {
         out.write(reasonBytes.length);
         out.write(reasonBytes);
 
-        out.writeInt(port);
+        out.writeInt(this.port);
     }
 
     @Override

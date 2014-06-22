@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
+import me.heldplayer.chat.framework.config.ServerEntry;
 import me.heldplayer.chat.framework.util.KeyUtils;
 
 public class ConnectionsList {
@@ -43,6 +44,11 @@ public class ConnectionsList {
 
         this.thread = new Thread(this.runnable = new RunnableConnection(this, this.serverSocket), "ServerChat connection listener");
         this.thread.start();
+
+        for (ServerEntry entry : this.config.getServers()) {
+            ServerConnection connection = new ServerConnection(this, entry);
+            this.connections.add(connection);
+        }
     }
 
     public void stopListening() {
