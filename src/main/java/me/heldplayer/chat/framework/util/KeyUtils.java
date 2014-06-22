@@ -4,8 +4,10 @@ package me.heldplayer.chat.framework.util;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 
 import org.apache.commons.io.input.ReaderInputStream;
@@ -13,6 +15,12 @@ import org.apache.commons.io.input.ReaderInputStream;
 public final class KeyUtils {
 
     private KeyUtils() {}
+
+    private static SecureRandom rand = new SecureRandom();
+
+    public static String getRandomChallenge() {
+        return new BigInteger(130, KeyUtils.rand).toString(32);
+    }
 
     public static byte[] getSignature(PrivateKey key, String input) {
         return KeyUtils.getSignature(key, new ReaderInputStream(new StringReader(input)));

@@ -11,24 +11,24 @@ import me.heldplayer.chat.framework.ServerConnection;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
-import me.heldplayer.chat.framework.util.KeyUtils;
 
 /**
- * First packet sent to a server, verifies that a server is who it claims to be
+ * Sent in response to {@link PacketAuthChallenge}, sends a different challenge
+ * to the original server to also verify the server's identity
  */
-public class PacketAuthChallenge extends ChatPacket {
+public class PacketAuthChallengeResponse extends ChatPacket {
 
     private UUID uuid;
     private String challenge;
     private byte[] signature;
 
-    public PacketAuthChallenge(UUID uuid, String challenge, byte[] signature) {
+    public PacketAuthChallengeResponse(UUID uuid, String challenge, byte[] signature) {
         this.uuid = uuid;
         this.challenge = challenge;
         this.signature = signature;
     }
 
-    public PacketAuthChallenge() {}
+    public PacketAuthChallengeResponse() {}
 
     @Override
     public void write(DataOutputStream out) throws IOException {
@@ -71,10 +71,7 @@ public class PacketAuthChallenge extends ChatPacket {
                     connection.disconnect(e.getMessage());
                     return;
                 }
-                UUID uuid = connection.connectionsList.getConfiguration().getServerUUID();
-                String challenge = KeyUtils.getRandomChallenge();
-                byte[] signature = KeyUtils.getSignature(connection.connectionsList.getConfiguration().getPrivateKey(), challenge);
-                connection.addPacket(new PacketAuthChallengeResponse(uuid, challenge, signature));
+                connection.addPacket(new PacketAuthenticationComplete());
             }
             else {
                 connection.disconnect("Verification of server failed");

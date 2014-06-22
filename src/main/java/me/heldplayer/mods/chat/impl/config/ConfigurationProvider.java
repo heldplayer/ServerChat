@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.UUID;
 
@@ -85,6 +87,16 @@ public class ConfigurationProvider implements IServerConfiguration {
     public boolean isOfflineMode() {
         // FIXME
         return false;
+    }
+
+    @Override
+    public PrivateKey getPrivateKey() {
+        return this.configuration.keyPair.getPrivate();
+    }
+
+    @Override
+    public PublicKey getPublicKey() {
+        return this.configuration.keyPair.getPublic();
     }
 
 }

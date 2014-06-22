@@ -22,7 +22,8 @@ public class RunnableConnection implements Runnable {
         while (this.running) {
             try {
                 Socket socket = this.serverSocket.accept();
-                ServerConnection connection = new ServerConnection(socket);
+                ServerConnection connection = new ServerConnection(this.connectionsList, socket);
+                this.connectionsList.addConnection(connection);
 
                 Thread.sleep(10L);
             }

@@ -6,25 +6,44 @@ import java.util.HashMap;
 
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.auth.PacketAuthChallenge;
+import me.heldplayer.chat.framework.packet.auth.PacketAuthChallengeResponse;
+import me.heldplayer.chat.framework.packet.auth.PacketAuthenticationComplete;
+import me.heldplayer.chat.framework.packet.auth.PacketDisconnect;
 
 public enum ConnectionState {
 
     DISCONNECTED,
-    CONNECTING,
+    CONNECTING {
+        {
+            this.registerPacket("disconnect", PacketDisconnect.class);
+        }
+    },
     AUTHENTICATING {
         {
+            this.registerPacket("disconnect", PacketDisconnect.class);
             this.registerPacket("authChallenge", PacketAuthChallenge.class);
+            this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
+        }
+    },
+    AUTHENTICATED {
+        {
+            this.registerPacket("disconnect", PacketDisconnect.class);
+            this.registerPacket("authChallenge", PacketAuthChallenge.class);
+            this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
+            this.registerPacket("authComplete", PacketAuthenticationComplete.class);
         }
     },
     CONNECTED {
         {
-            //this.registerPacket(null, null);
+            this.registerPacket("disconnect", PacketDisconnect.class);
+            this.registerPacket("authComplete", PacketAuthenticationComplete.class);
         }
     },
     RECONNECTING,
     ERRORED;
 
     private HashMap<String, Class<? extends ChatPacket>> namesToPackets = new HashMap<String, Class<? extends ChatPacket>>();
+    private HashMap<Class<? extends ChatPacket>, String> packetsToNames = new HashMap<Class<? extends ChatPacket>, String>();
 
     ConnectionState registerPacket(String name, Class<? extends ChatPacket> clazz) {
         if (this.namesToPackets.containsKey(name)) {
@@ -32,6 +51,7 @@ public enum ConnectionState {
         }
 
         this.namesToPackets.put(name, clazz);
+        this.packetsToNames.put(clazz, name);
 
         return this;
     }
@@ -53,4 +73,7 @@ public enum ConnectionState {
         }
     }
 
+    public String getPacketName(Class<? extends ChatPacket> clazz) {
+        return this.packetsToNames.get(clazz);
+    }
 }

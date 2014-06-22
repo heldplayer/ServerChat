@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
+import me.heldplayer.chat.framework.util.KeyUtils;
 
 public class ConnectionsList {
 
@@ -15,11 +18,14 @@ public class ConnectionsList {
     private RunnableConnection runnable;
     private Thread thread;
 
+    private List<ServerConnection> connections;
+
     public ConnectionsList(IServerConfiguration config) {
         if (config.isOfflineMode()) {
             throw new RuntimeException("Mod is not supported in offline mode!");
         }
 
+        this.connections = new ArrayList<ServerConnection>();
         this.config = config;
         this.config.load(new File("servers.cfg"));
     }
@@ -45,10 +51,24 @@ public class ConnectionsList {
             @SuppressWarnings("deprecation")
             public void run() {
                 ConnectionsList.this.runnable.running = false;
+                for (ServerConnection connection : ConnectionsList.this.connections) {
+                    if (connection.runnable != null) {
+                        connection.runnable.running = false;
+                    }
+                }
                 int count = 500;
                 try {
-                    while (ConnectionsList.this.thread.isAlive() && count > 0) {
+                    boolean goOn = true;
+                    while (goOn && count > 0) {
                         count--;
+
+                        goOn = ConnectionsList.this.thread.isAlive();
+                        for (ServerConnection connection : ConnectionsList.this.connections) {
+                            if (connection.thread != null) {
+                                goOn |= connection.thread.isAlive();
+                            }
+                        }
+
                         Thread.sleep(10L);
                     }
                 }
@@ -57,6 +77,12 @@ public class ConnectionsList {
                 }
                 if (ConnectionsList.this.thread.isAlive()) {
                     ConnectionsList.this.thread.stop();
+                }
+
+                for (ServerConnection connection : ConnectionsList.this.connections) {
+                    if (connection.thread != null && connection.thread.isAlive()) {
+                        connection.thread.stop();
+                    }
                 }
             }
         }, "Connection Terminator Thread");
@@ -67,6 +93,22 @@ public class ConnectionsList {
         catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void addConnection(ServerConnection connection) {
+        this.connections.add(connection);
+    }
+
+    public void removeConnection(ServerConnection connection) {
+        this.connections.remove(connection);
+    }
+
+    public byte[] getSignature(String input) {
+        return KeyUtils.getSignature(this.config.getPrivateKey(), input);
+    }
+
+    public IServerConfiguration getConfiguration() {
+        return this.config;
     }
 
 }
