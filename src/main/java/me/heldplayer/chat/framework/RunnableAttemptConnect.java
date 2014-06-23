@@ -43,16 +43,16 @@ public class RunnableAttemptConnect implements Runnable {
                 }
             }
             catch (UnknownHostException e) {
-                this.connection.disconnect(null);
+                this.connection.disconnectServer(null);
             }
             catch (IOException e) {
-                this.connection.disconnect(null);
+                this.connection.disconnectServer(null);
             }
 
             this.connection.setState(ConnectionState.DISCONNECTED);
         }
         catch (AuthenticationException e) {
-            this.connection.disconnect("Error connecting: " + e.getMessage());
+            this.connection.disconnectServer("Error connecting: " + e.getMessage());
         }
     }
 }

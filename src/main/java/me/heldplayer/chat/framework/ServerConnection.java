@@ -37,6 +37,15 @@ public class ServerConnection {
         this.setInOut(socket);
         this.state = ConnectionState.AUTHENTICATING;
 
+        this.entry = new ServerEntry();
+        String[] ip = socket.getInetAddress().toString().split("/");
+        if (ip[0].isEmpty()) {
+            this.entry.setIp(ip[1]);
+        }
+        else {
+            this.entry.setIp(ip[0]);
+        }
+
         this.startThread();
     }
 
@@ -108,13 +117,23 @@ public class ServerConnection {
         this.outboundPackets.add(packet);
     }
 
-    public void disconnect(String reason) {
-        System.out.println("Disconnecting server for '" + reason + "'");
+    public void disconnectServer(String reason) {
+        System.err.println("Disconnecting server for '" + reason + "'");
         if (reason != null) {
-            this.addPacket(new PacketDisconnect(reason));
+            this.addPacket(new PacketDisconnect(reason, false));
         }
         this.disconnecting = true;
         this.connectionsList.removeConnection(this);
+    }
+
+    public void kickServer(String reason) {
+        System.err.println("Kicking server for '" + reason + "'");
+        if (reason != null) {
+            this.addPacket(new PacketDisconnect(reason, true));
+        }
+        this.disconnecting = true;
+        this.connectionsList.removeConnection(this);
+        this.connectionsList.removeServer(this.getUuid());
     }
 
     public UUID getUuid() {

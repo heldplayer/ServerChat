@@ -62,7 +62,7 @@ public class PacketAuthChallenge extends ChatPacket {
     @Override
     public void onPacket(ServerConnection connection) {
         if (!this.uuid.equals(connection.getUuid())) {
-            connection.disconnect("Mismatched UUIDs (" + this.uuid + " vs. " + connection.getUuid() + ")");
+            connection.kickServer("Mismatched UUIDs (" + this.uuid + " vs. " + connection.getUuid() + ")");
             return;
         }
         if (connection.getState() == ConnectionState.AUTHENTICATING) {
@@ -72,7 +72,7 @@ public class PacketAuthChallenge extends ChatPacket {
                     connection.setState(ConnectionState.AUTHENTICATED);
                 }
                 catch (AuthenticationException e) {
-                    connection.disconnect(e.getMessage());
+                    connection.kickServer(e.getMessage());
                     return;
                 }
 
@@ -84,11 +84,11 @@ public class PacketAuthChallenge extends ChatPacket {
                 connection.addPacket(new PacketAuthChallengeResponse(uuid, challenge, signature));
             }
             else {
-                connection.disconnect("Verification of server failed");
+                connection.kickServer("Verification of server failed");
             }
         }
         else {
-            connection.disconnect("Invalid connection state detected");
+            connection.kickServer("Invalid connection state detected");
         }
     }
 

@@ -14,8 +14,9 @@ import me.heldplayer.chat.framework.ServerConnection;
 public class PacketDisconnect extends ChatPacket {
 
     private String reason;
+    private boolean kicked;
 
-    public PacketDisconnect(String reason) {
+    public PacketDisconnect(String reason, boolean kicked) {
         this.reason = reason;
     }
 
@@ -23,6 +24,8 @@ public class PacketDisconnect extends ChatPacket {
 
     @Override
     public void write(DataOutputStream out) throws IOException {
+        out.writeBoolean(this.kicked);
+
         byte[] reasonBytes = this.reason.getBytes();
         out.writeInt(reasonBytes.length);
         out.write(reasonBytes);
@@ -30,6 +33,8 @@ public class PacketDisconnect extends ChatPacket {
 
     @Override
     public void read(DataInputStream in) throws IOException {
+        this.kicked = in.readBoolean();
+
         byte[] reasonBytes = new byte[in.readInt()];
         in.readFully(reasonBytes);
         this.reason = new String(reasonBytes);
@@ -37,9 +42,11 @@ public class PacketDisconnect extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
-        System.out.println("Server disconnected: " + this.reason);
-        connection.connectionsList.removeConnection(connection);
-        connection.disconnect(null);
+        System.err.println("Server disconnected: " + this.reason);
+        connection.disconnectServer(null);
+        if (this.kicked) {
+            connection.connectionsList.removeServer(connection.getUuid());
+        }
     }
 
 }

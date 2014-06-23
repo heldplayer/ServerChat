@@ -31,11 +31,12 @@ public class PacketAuthComplete extends ChatPacket {
                 connection.setState(ConnectionState.CONNECTED);
             }
             catch (AuthenticationException e) {
-                connection.disconnect(e.getMessage());
+                connection.kickServer(e.getMessage());
                 return;
             }
             connection.addPacket(new PacketAuthComplete());
             connection.connectionsList.synchronizeData(connection);
+            connection.connectionsList.save();
         }
     }
 

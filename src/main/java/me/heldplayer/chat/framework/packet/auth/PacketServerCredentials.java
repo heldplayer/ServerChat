@@ -54,17 +54,22 @@ public class PacketServerCredentials extends ChatPacket {
     @Override
     public void onPacket(ServerConnection connection) {
         if (connection.entry != null) {
-            if (connection.getUuid() != null) {
-                connection.disconnect("UUID already sent");
+            if (connection.getUuid() != null && !connection.getUuid().equals(this.uuid)) {
+                connection.kickServer("UUID already sent");
             }
             else {
-                System.out.println("Adding server " + this.uuid + " (" + this.host + ":" + this.port + ")");
-                connection.entry = new ServerEntry();
-                connection.entry.setUuid(this.uuid);
+                ServerEntry entry = connection.entry;
+                entry.setUuid(this.uuid);
+                if (!this.host.isEmpty()) {
+                    entry.setIp(this.host);
+                }
+                entry.setPort(this.port);
+                System.out.println("Added server " + entry.getUuid() + " (" + entry.getIp() + ":" + entry.getPort() + ")");
             }
             return;
         }
 
+        System.err.println("Server doesn't have an entry set?!");
         System.out.println("Adding server " + this.uuid + " (" + this.host + ":" + this.port + ")");
         connection.entry = new ServerEntry();
         connection.entry.setUuid(this.uuid);

@@ -2,7 +2,6 @@
 package me.heldplayer.chat.framework.test;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -23,11 +22,12 @@ class RunnableConsoleReader implements Runnable {
                     System.out.println("Stopped");
                 }
                 else if (input.equalsIgnoreCase("save")) {
-                    ConnectionTest.connections.getConfiguration().save(new File("servers.cfg"));
+                    ConnectionTest.connections.save();
+                    ;
                     System.out.println("Saved");
                 }
                 else if (input.equalsIgnoreCase("load")) {
-                    ConnectionTest.connections.getConfiguration().load(new File("servers.cfg"));
+                    ConnectionTest.connections.load();
                     System.out.println("Loaded");
                 }
                 else if (input.equalsIgnoreCase("connect")) {

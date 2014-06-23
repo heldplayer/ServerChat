@@ -5,9 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
 import me.heldplayer.chat.framework.config.ServerEntry;
@@ -24,14 +28,18 @@ public class ConnectionsList {
     private RunnableConnection runnable;
     private Thread thread;
 
-    private List<ServerConnection> connections;
+    private Queue<ServerConnection> connections;
+    private Collection<ServerConnection> roConnections;
+    private File saveDir;
 
     public ConnectionsList(IServerConfiguration config, File saveDir) {
         if (config.isOfflineMode()) {
             throw new RuntimeException("Mod is not supported in offline mode!");
         }
+        this.saveDir = saveDir;
 
-        this.connections = new ArrayList<ServerConnection>();
+        this.connections = new ConcurrentLinkedQueue<ServerConnection>();
+        this.roConnections = Collections.unmodifiableCollection(this.connections);
         this.config = config;
         this.config.load(saveDir);
         this.config.save(saveDir);
@@ -62,12 +70,14 @@ public class ConnectionsList {
             @Override
             @SuppressWarnings("deprecation")
             public void run() {
-                ConnectionsList.this.runnable.stopListening();
                 for (ServerConnection connection : ConnectionsList.this.connections) {
-                    if (connection.runnable != null) {
-                        connection.runnable.running = false;
-                    }
+                    connection.disconnectServer("Shutting down...");
                 }
+                try {
+                    Thread.sleep(50L);
+                }
+                catch (InterruptedException e1) {}
+                ConnectionsList.this.runnable.stopListening();
                 int count = 500;
                 try {
                     boolean goOn = true;
@@ -115,8 +125,30 @@ public class ConnectionsList {
         this.connections.remove(connection);
     }
 
-    public List<ServerConnection> getConnections() {
-        return this.connections;
+    public void removeServer(UUID uuid) {
+        if (uuid == null) {
+            return;
+        }
+        List<ServerEntry> entries = this.config.getServers();
+
+        for (Iterator<ServerEntry> i = entries.iterator(); i.hasNext();) {
+            ServerEntry entry = i.next();
+
+            if (entry.getUuid() == null) {
+                continue;
+            }
+
+            if (entry.getUuid().equals(uuid)) {
+                i.remove();
+                break;
+            }
+        }
+
+        this.save();
+    }
+
+    public Collection<ServerConnection> getConnections() {
+        return this.roConnections;
     }
 
     public byte[] getSignature(String input) {
@@ -169,12 +201,20 @@ public class ConnectionsList {
                 continue;
             }
 
-            connection.addPacket(new PacketChallengeRequest(currServerConnection.getUuid(), connection.getUuid()));
+            System.out.println(String.format("Telling %s about locally connected server %s", connection.getUuid(), currServerConnection.getUuid()));
+            currServerConnection.addPacket(new PacketChallengeRequest(currServerConnection.getUuid(), connection.getUuid()));
+
+            System.out.println(String.format("Telling locally connected server %s about %s", currServerConnection.getUuid(), connection.getUuid()));
+            connection.addPacket(new PacketChallengeRequest(connection.getUuid(), currServerConnection.getUuid()));
 
             for (RemoteConnection currRemoteConnection : currServerConnection.getRemoteConnections()) {
                 if (currRemoteConnection.uuid.equals(connection.getUuid())) {
-                    connection.addPacket(new PacketChallengeRequest(currRemoteConnection.uuid, connection.getUuid()));
+                    continue;
                 }
+
+                System.out.println(String.format("Telling %s about remotely connected server %s", connection.getUuid(), currServerConnection.getUuid()));
+
+                currServerConnection.addPacket(new PacketChallengeRequest(currRemoteConnection.uuid, connection.getUuid()));
             }
         }
     }
@@ -203,6 +243,40 @@ public class ConnectionsList {
         }
 
         return null;
+    }
+
+    public void save() {
+        List<ServerEntry> entries = this.config.getServers();
+
+        for (ServerConnection connection : this.connections) {
+            boolean present = false;
+
+            if (connection.entry.getUuid() == null) {
+                continue;
+            }
+
+            for (ServerEntry entry : entries) {
+                if (connection.entry.getUuid().equals(entry.getUuid())) {
+                    present = true;
+                    if (connection.entry.getIp() != null && !connection.entry.getIp().isEmpty()) {
+                        entry.setIp(connection.entry.getIp());
+                    }
+                    if (connection.entry.getPort() != 0) {
+                        entry.setPort(connection.entry.getPort());
+                    }
+                }
+            }
+
+            if (!present) {
+                entries.add(connection.entry);
+            }
+        }
+
+        this.config.save(this.saveDir);
+    }
+
+    public void load() {
+        this.config.load(this.saveDir);
     }
 
 }

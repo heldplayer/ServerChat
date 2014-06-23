@@ -41,7 +41,7 @@ public class RunnableReadWrite implements Runnable {
                     in.readFully(idBytes);
                     String id = new String(idBytes);
 
-                    System.out.println("Got packet id '" + id + "'");
+                    System.out.println(" < Got packet id '" + id + "'");
 
                     ChatPacket packet = this.connection.getState().createPacket(id);
                     if (packet == null) {
@@ -58,7 +58,7 @@ public class RunnableReadWrite implements Runnable {
                     for (ChatPacket packet : this.connection.outboundPackets) {
                         String id = this.connection.getState().getPacketName(packet.getClass());
 
-                        System.out.println("Sending packet id '" + id + "'");
+                        System.out.println(" > Sending packet id '" + id + "'");
 
                         if (id == null) {
                             throw new RuntimeException("Bad packet sent to server");

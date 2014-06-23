@@ -46,6 +46,14 @@ public class ServerConfiguration {
             entry.setIp(entryObj.get("ip").getAsString());
             entry.setPort(entryObj.get("port").getAsInt());
             entry.setUuid(UUID.fromString(entryObj.get("uuid").getAsString()));
+            if (this.uuid.equals(entry.getUuid())) {
+                System.err.println("Skipping connection that has the same UUID as the server");
+                continue;
+            }
+            if (entry.getIp().isEmpty()) {
+                System.err.println("Skipping connection with uuid " + entry.getUuid() + " because the IP is missing");
+                continue;
+            }
             this.serverEntries.add(entry);
         }
     }
@@ -59,9 +67,9 @@ public class ServerConfiguration {
         JsonArray serverEntries = new JsonArray();
         for (ServerEntry entry : this.serverEntries) {
             JsonObject entryObj = new JsonObject();
-            entryObj.add("ip", new JsonPrimitive(entry.getIp()));
+            entryObj.add("ip", new JsonPrimitive(entry.getIp() != null ? entry.getIp() : ""));
             entryObj.add("port", new JsonPrimitive(entry.getPort()));
-            entryObj.add("uuid", new JsonPrimitive(entry.getUuid().toString()));
+            entryObj.add("uuid", new JsonPrimitive(entry.getUuid() != null ? entry.getUuid().toString() : ""));
             serverEntries.add(entryObj);
         }
         result.add("server-entries", serverEntries);
