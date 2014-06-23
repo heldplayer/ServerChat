@@ -5,7 +5,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.config.ServerEntry;
@@ -22,19 +25,17 @@ public class ServerConnection {
 
     public final ConnectionsList connectionsList;
     public ServerEntry entry;
+    private ArrayList<RemoteConnection> remoteConnections = new ArrayList<RemoteConnection>();
     RunnableReadWrite runnable;
     Thread thread;
 
     boolean disconnecting;
-    LinkedList<ChatPacket> inboundPackets;
-    LinkedList<ChatPacket> outboundPackets;
+    LinkedList<ChatPacket> outboundPackets = new LinkedList<ChatPacket>();
 
     public ServerConnection(ConnectionsList connectionsList, Socket socket) throws IOException {
         this.connectionsList = connectionsList;
-        this.socket = socket;
+        this.setInOut(socket);
         this.state = ConnectionState.AUTHENTICATING;
-
-        this.setInOut(this.socket);
 
         this.startThread();
     }
@@ -55,6 +56,12 @@ public class ServerConnection {
     }
 
     protected void setInOut(Socket socket) throws IOException {
+        if (this.socket != null) {
+            try {
+                this.socket.close();
+            }
+            catch (IOException e) {}
+        }
         if (this.in != null) {
             try {
                 this.in.close();
@@ -67,6 +74,7 @@ public class ServerConnection {
             }
             catch (IOException e) {}
         }
+        this.socket = socket;
         this.in = new DataInputStream(socket.getInputStream());
         this.out = new DataOutputStream(socket.getOutputStream());
     }
@@ -92,6 +100,7 @@ public class ServerConnection {
                 throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
             }
         }
+        System.out.println(String.format("Transitioning state from %s to %s", this.state, state));
         this.state = state;
     }
 
@@ -100,10 +109,31 @@ public class ServerConnection {
     }
 
     public void disconnect(String reason) {
+        System.out.println("Disconnecting server for '" + reason + "'");
         if (reason != null) {
             this.addPacket(new PacketDisconnect(reason));
         }
         this.disconnecting = true;
         this.connectionsList.removeConnection(this);
     }
+
+    public UUID getUuid() {
+        if (this.entry != null) {
+            return this.entry.getUuid();
+        }
+        return null;
+    }
+
+    public void addRemoteConnection(RemoteConnection connection) {
+        this.remoteConnections.add(connection);
+    }
+
+    public void removeRemoteConnection(RemoteConnection connection) {
+        this.remoteConnections.remove(connection);
+    }
+
+    public List<RemoteConnection> getRemoteConnections() {
+        return this.remoteConnections;
+    }
+
 }

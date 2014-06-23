@@ -1,6 +1,7 @@
 
 package me.heldplayer.mods.chat;
 
+import java.io.File;
 import java.io.IOException;
 
 import me.heldplayer.chat.framework.ConnectionsList;
@@ -24,12 +25,12 @@ public class CommonProxy extends SpACoreProxy {
     public void postInit(FMLPostInitializationEvent event) {}
 
     public void initializeServerConnection() {
-        if (connections != null) {
-            connections.stopListening();
+        if (this.connections != null) {
+            this.connections.stopListening();
         }
-        connections = new ConnectionsList(new ConfigurationProvider());
+        this.connections = new ConnectionsList(new ConfigurationProvider(), new File("./config/" + Objects.MOD_ID + ""));
         try {
-            connections.startListening();
+            this.connections.startListening();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -37,8 +38,8 @@ public class CommonProxy extends SpACoreProxy {
     }
 
     public void closeServerConnection() {
-        if (connections != null) {
-            connections.stopListening();
+        if (this.connections != null) {
+            this.connections.stopListening();
         }
     }
 

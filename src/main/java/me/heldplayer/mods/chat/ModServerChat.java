@@ -70,12 +70,12 @@ public class ModServerChat extends SpACoreMod {
 
     @EventHandler
     public void serverStarted(FMLServerStartedEvent event) {
-        proxy.initializeServerConnection();
+        ModServerChat.proxy.initializeServerConnection();
     }
 
     @EventHandler
     public void serverStopping(FMLServerStoppingEvent event) {
-        proxy.closeServerConnection();
+        ModServerChat.proxy.closeServerConnection();
     }
 
 }

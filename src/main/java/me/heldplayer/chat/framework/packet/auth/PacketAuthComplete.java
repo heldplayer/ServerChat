@@ -14,9 +14,9 @@ import me.heldplayer.chat.framework.packet.ConnectionState;
  * Sent when a server disconnects, indicates that an attempt to reconnect should
  * not be made
  */
-public class PacketAuthenticationComplete extends ChatPacket {
+public class PacketAuthComplete extends ChatPacket {
 
-    public PacketAuthenticationComplete() {}
+    public PacketAuthComplete() {}
 
     @Override
     public void write(DataOutputStream out) throws IOException {}
@@ -26,7 +26,7 @@ public class PacketAuthenticationComplete extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
-        if (connection.getState() == ConnectionState.AUTHENTICATING) {
+        if (connection.getState() == ConnectionState.AUTHENTICATED) {
             try {
                 connection.setState(ConnectionState.CONNECTED);
             }
@@ -34,8 +34,8 @@ public class PacketAuthenticationComplete extends ChatPacket {
                 connection.disconnect(e.getMessage());
                 return;
             }
-            connection.addPacket(new PacketAuthenticationComplete());
-            // TODO: synchronize information
+            connection.addPacket(new PacketAuthComplete());
+            connection.connectionsList.synchronizeData(connection);
         }
     }
 

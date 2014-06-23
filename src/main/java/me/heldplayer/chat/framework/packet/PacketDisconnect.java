@@ -24,7 +24,7 @@ public class PacketDisconnect extends ChatPacket {
     @Override
     public void write(DataOutputStream out) throws IOException {
         byte[] reasonBytes = this.reason.getBytes();
-        out.write(reasonBytes.length);
+        out.writeInt(reasonBytes.length);
         out.write(reasonBytes);
     }
 
@@ -37,7 +37,9 @@ public class PacketDisconnect extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
+        System.out.println("Server disconnected: " + this.reason);
         connection.connectionsList.removeConnection(connection);
+        connection.disconnect(null);
     }
 
 }

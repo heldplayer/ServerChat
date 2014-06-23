@@ -14,7 +14,7 @@ public class ClientProxy extends CommonProxy {
         // FIXME
         super.initializeServerConnection();
     }
-    
+
     @Override
     public void closeServerConnection() {
         // NOOP on client

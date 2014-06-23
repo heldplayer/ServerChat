@@ -21,8 +21,19 @@ public class RunnableReadWrite implements Runnable {
 
     @Override
     public void run() {
-        while (this.running || this.connection.disconnecting) {
-            try {
+        try {
+            while (this.running || this.connection.disconnecting) {
+                if (this.connection.socket.isClosed()) {
+                    System.out.println("Connection lost");
+
+                    return;
+                }
+
+                if (this.connection.disconnecting) {
+                    this.running = false;
+                    this.connection.disconnecting = false;
+                }
+
                 // Read
                 DataInputStream in = this.connection.in;
                 while (in.available() > 0) {
@@ -30,12 +41,15 @@ public class RunnableReadWrite implements Runnable {
                     in.readFully(idBytes);
                     String id = new String(idBytes);
 
+                    System.out.println("Got packet id '" + id + "'");
+
                     ChatPacket packet = this.connection.getState().createPacket(id);
                     if (packet == null) {
                         throw new RuntimeException("Bad packet received from server");
                     }
                     packet.read(in);
-                    this.connection.inboundPackets.add(packet);
+
+                    packet.onPacket(this.connection);
                 }
 
                 // Write
@@ -43,6 +57,9 @@ public class RunnableReadWrite implements Runnable {
                     DataOutputStream out = this.connection.out;
                     for (ChatPacket packet : this.connection.outboundPackets) {
                         String id = this.connection.getState().getPacketName(packet.getClass());
+
+                        System.out.println("Sending packet id '" + id + "'");
+
                         if (id == null) {
                             throw new RuntimeException("Bad packet sent to server");
                         }
@@ -54,40 +71,36 @@ public class RunnableReadWrite implements Runnable {
                     this.connection.outboundPackets.clear();
                 }
 
-                if (this.connection.inboundPackets.size() > 0) {
-                    for (ChatPacket packet : this.connection.inboundPackets) {
-                        packet.onPacket(this.connection);
-                    }
-                    this.connection.inboundPackets.clear();
-                }
-
                 Thread.sleep(10L);
             }
-            catch (InterruptedException e) {}
-            catch (IOException e) {
-                e.printStackTrace();
-                break;
-            }
-            finally {
+
+        }
+        catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            this.running = false;
+            this.connection.disconnecting = false;
+
+            if (this.connection.in != null) {
                 try {
                     this.connection.in.close();
                 }
                 catch (IOException e) {}
+            }
+            if (this.connection.out != null) {
                 try {
                     this.connection.out.close();
                 }
                 catch (IOException e) {}
+            }
+            if (this.connection.socket != null) {
                 try {
                     this.connection.socket.close();
                 }
                 catch (IOException e) {}
             }
-            if (this.connection.disconnecting) {
-                this.running = false;
-            }
         }
-
-        this.connection.disconnecting = false;
     }
 
 }

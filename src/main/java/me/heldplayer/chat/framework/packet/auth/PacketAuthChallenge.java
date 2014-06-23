@@ -34,14 +34,14 @@ public class PacketAuthChallenge extends ChatPacket {
     public void write(DataOutputStream out) throws IOException {
         String uuid = this.uuid.toString();
         byte[] uuidBytes = uuid.getBytes();
-        out.write(uuidBytes.length);
+        out.writeInt(uuidBytes.length);
         out.write(uuidBytes);
 
         byte[] challengeBytes = this.challenge.getBytes();
-        out.write(challengeBytes.length);
+        out.writeInt(challengeBytes.length);
         out.write(challengeBytes);
 
-        out.write(this.signature.length);
+        out.writeInt(this.signature.length);
         out.write(this.signature);
     }
 
@@ -61,7 +61,11 @@ public class PacketAuthChallenge extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
-        if (connection.getState() == ConnectionState.CONNECTING) {
+        if (!this.uuid.equals(connection.getUuid())) {
+            connection.disconnect("Mismatched UUIDs (" + this.uuid + " vs. " + connection.getUuid() + ")");
+            return;
+        }
+        if (connection.getState() == ConnectionState.AUTHENTICATING) {
             boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
             if (verified) {
                 try {
@@ -71,6 +75,9 @@ public class PacketAuthChallenge extends ChatPacket {
                     connection.disconnect(e.getMessage());
                     return;
                 }
+
+                connection.addPacket(connection.connectionsList.getServerCredentials());
+
                 UUID uuid = connection.connectionsList.getConfiguration().getServerUUID();
                 String challenge = KeyUtils.getRandomChallenge();
                 byte[] signature = KeyUtils.getSignature(connection.connectionsList.getConfiguration().getPrivateKey(), challenge);

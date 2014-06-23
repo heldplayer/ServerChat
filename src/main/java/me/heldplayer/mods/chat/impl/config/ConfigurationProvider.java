@@ -1,12 +1,18 @@
 
 package me.heldplayer.mods.chat.impl.config;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.List;
 import java.util.UUID;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
@@ -24,45 +30,152 @@ public class ConfigurationProvider implements IServerConfiguration {
     private static Gson gson = new Gson();
 
     private ServerConfiguration configuration;
+    private KeyPair keypair;
 
     @Override
-    public void load(File file) {
-        if (!file.exists()) {
+    public void load(File saveDir) {
+        if (!saveDir.exists()) {
+            saveDir.mkdirs();
+        }
+
+        File configFile = new File(saveDir, "config.cfg");
+
+        if (!configFile.exists() || !configFile.isFile()) {
+            try {
+                configFile.createNewFile();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
             this.configuration = new ServerConfiguration();
-            this.save(file);
         }
-        JsonReader reader = null;
-        try {
-            reader = new JsonReader(new FileReader(file));
-            reader.setLenient(true);
-            JsonElement element = Streams.parse(reader);
-            this.configuration = new ServerConfiguration(element.getAsJsonObject());
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Failed reading configuration", e);
-        }
-        finally {
-            if (reader != null) {
-                try {
-                    reader.close();
+        else {
+            JsonReader reader = null;
+            try {
+                reader = new JsonReader(new FileReader(configFile));
+                reader.setLenient(true);
+                JsonElement element = Streams.parse(reader);
+                this.configuration = new ServerConfiguration(element.getAsJsonObject());
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Failed reading configuration", e);
+            }
+            catch (IllegalStateException e) {
+                this.configuration = new ServerConfiguration();
+            }
+            finally {
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    }
+                    catch (IOException e) {}
                 }
-                catch (IOException e) {}
             }
         }
 
-        if (this.configuration.getKeyPair() == null) {
+        File keyFile = new File(saveDir, "key");
+
+        if (!keyFile.exists() || !keyFile.isFile()) {
+            try {
+                keyFile.createNewFile();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            this.keypair = KeyUtils.keyGen.generateKeyPair();
             System.out.println("Generated KeyPair");
-            this.configuration.setKeyPair(KeyUtils.keyGen.generateKeyPair());
+        }
+        else {
+            DataInputStream in = null;
+            try {
+                in = new DataInputStream(new FileInputStream(keyFile));
+
+                byte[] data = new byte[in.readInt()];
+                in.read(data);
+
+                this.keypair = KeyUtils.deserializeKey(data);
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Failed reading keys", e);
+            }
+            finally {
+                if (in != null) {
+                    try {
+                        in.close();
+                    }
+                    catch (IOException e) {}
+                }
+            }
         }
     }
 
     @Override
-    public void save(File file) {
+    public void save(File saveDir) {
+        if (!saveDir.exists()) {
+            saveDir.mkdirs();
+        }
+
+        File configFile = new File(saveDir, "config.cfg");
+
+        if (!configFile.exists() || !configFile.isFile()) {
+            try {
+                configFile.createNewFile();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        JsonWriter writer = null;
         try {
-            ConfigurationProvider.gson.toJson(this.configuration.toJson(), new JsonWriter(new FileWriter(file)));
+            JsonElement element = this.configuration.toJson();
+            writer = new JsonWriter(new FileWriter(configFile));
+            writer.setIndent("  ");
+            ConfigurationProvider.gson.toJson(element, writer);
         }
         catch (IOException e) {
             throw new RuntimeException("Failed saving configuration", e);
+        }
+        finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        File keyFile = new File(saveDir, "key");
+
+        if (!keyFile.exists() || !keyFile.isFile()) {
+            try {
+                keyFile.createNewFile();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        DataOutputStream out = null;
+        try {
+            out = new DataOutputStream(new FileOutputStream(keyFile));
+
+            byte[] data = KeyUtils.serializeKey(this.keypair);
+            out.writeInt(data.length);
+            out.write(data);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed saving keys", e);
+        }
+        finally {
+            if (out != null) {
+                try {
+                    out.close();
+                }
+                catch (IOException e) {}
+            }
         }
     }
 
@@ -72,7 +185,7 @@ public class ConfigurationProvider implements IServerConfiguration {
     }
 
     @Override
-    public ServerEntry[] getServers() {
+    public List<ServerEntry> getServers() {
         return this.configuration.getServerEntries();
     }
 
@@ -94,12 +207,12 @@ public class ConfigurationProvider implements IServerConfiguration {
 
     @Override
     public PrivateKey getPrivateKey() {
-        return this.configuration.keyPair.getPrivate();
+        return this.keypair.getPrivate();
     }
 
     @Override
     public PublicKey getPublicKey() {
-        return this.configuration.keyPair.getPublic();
+        return this.keypair.getPublic();
     }
 
 }

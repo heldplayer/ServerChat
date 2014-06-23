@@ -6,7 +6,11 @@ import java.util.HashMap;
 
 import me.heldplayer.chat.framework.packet.auth.PacketAuthChallenge;
 import me.heldplayer.chat.framework.packet.auth.PacketAuthChallengeResponse;
-import me.heldplayer.chat.framework.packet.auth.PacketAuthenticationComplete;
+import me.heldplayer.chat.framework.packet.auth.PacketAuthComplete;
+import me.heldplayer.chat.framework.packet.auth.PacketServerCredentials;
+import me.heldplayer.chat.framework.packet.coms.PacketChallengeRequest;
+import me.heldplayer.chat.framework.packet.coms.PacketChallengeResponse;
+import me.heldplayer.chat.framework.packet.coms.PacketRemoteServerConnected;
 
 public enum ConnectionState {
 
@@ -14,27 +18,37 @@ public enum ConnectionState {
     CONNECTING {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
+            this.registerPacket("ping", PacketPing.class);
         }
     },
     AUTHENTICATING {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
+            this.registerPacket("ping", PacketPing.class);
             this.registerPacket("authChallenge", PacketAuthChallenge.class);
             this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
+            this.registerPacket("serverCredentials", PacketServerCredentials.class);
         }
     },
     AUTHENTICATED {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
+            this.registerPacket("ping", PacketPing.class);
             this.registerPacket("authChallenge", PacketAuthChallenge.class);
             this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
-            this.registerPacket("authComplete", PacketAuthenticationComplete.class);
+            this.registerPacket("authComplete", PacketAuthComplete.class);
+            this.registerPacket("serverCredentials", PacketServerCredentials.class);
         }
     },
     CONNECTED {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
-            this.registerPacket("authComplete", PacketAuthenticationComplete.class);
+            this.registerPacket("ping", PacketPing.class);
+            this.registerPacket("authComplete", PacketAuthComplete.class);
+
+            this.registerPacket("challengeRequest", PacketChallengeRequest.class);
+            this.registerPacket("challengeResponse", PacketChallengeResponse.class);
+            this.registerPacket("remoteServerConnected", PacketRemoteServerConnected.class);
         }
     },
     RECONNECTING,

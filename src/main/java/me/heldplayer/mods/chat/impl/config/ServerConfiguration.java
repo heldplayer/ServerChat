@@ -1,12 +1,12 @@
 
 package me.heldplayer.mods.chat.impl.config;
 
-import java.security.KeyPair;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import me.heldplayer.chat.framework.config.ServerEntry;
-import me.heldplayer.chat.framework.util.KeyUtils;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -17,34 +17,37 @@ import com.google.gson.annotations.SerializedName;
 public class ServerConfiguration {
 
     @SerializedName("uuid")
-    UUID uuid;
+    private UUID uuid;
     @SerializedName("server-entries")
-    ServerEntry[] serverEntries;
+    private List<ServerEntry> serverEntries;
     @SerializedName("host")
-    String host;
+    private String host;
     @SerializedName("port")
-    int port;
-    @SerializedName("key-pair")
-    KeyPair keyPair;
+    private int port;
 
-    public ServerConfiguration() {}
+    public ServerConfiguration() {
+        this.uuid = UUID.randomUUID();
+        this.serverEntries = new ArrayList<ServerEntry>();
+        this.host = "";
+        this.port = 37606;
+    }
 
     public ServerConfiguration(JsonObject element) {
         this.uuid = UUID.fromString(element.get("uuid").getAsString());
         this.host = element.get("host").getAsString();
         this.port = element.get("port").getAsInt();
 
-        JsonArray keyPair = element.get("key-pair").getAsJsonArray();
-        byte[] data = new byte[keyPair.size()];
-        Iterator<JsonElement> i = keyPair.iterator();
-        int index = 0;
+        JsonArray serverEntries = element.get("server-entries").getAsJsonArray();
+        this.serverEntries = new ArrayList<ServerEntry>();
+        Iterator<JsonElement> i = serverEntries.iterator();
         while (i.hasNext()) {
-            JsonElement e = i.next();
-            data[index++] = e.getAsByte();
+            JsonObject entryObj = i.next().getAsJsonObject();
+            ServerEntry entry = new ServerEntry();
+            entry.setIp(entryObj.get("ip").getAsString());
+            entry.setPort(entryObj.get("port").getAsInt());
+            entry.setUuid(UUID.fromString(entryObj.get("uuid").getAsString()));
+            this.serverEntries.add(entry);
         }
-        this.keyPair = KeyUtils.deserializeKey(data);
-
-        // TODO: load servers
     }
 
     public JsonElement toJson() {
@@ -53,14 +56,15 @@ public class ServerConfiguration {
         result.add("host", new JsonPrimitive(this.host));
         result.add("port", new JsonPrimitive(this.port));
 
-        JsonArray keyPair = new JsonArray();
-        byte[] data = KeyUtils.serializeKey(this.keyPair);
-        for (byte part : data) {
-            keyPair.add(new JsonPrimitive(part));
+        JsonArray serverEntries = new JsonArray();
+        for (ServerEntry entry : this.serverEntries) {
+            JsonObject entryObj = new JsonObject();
+            entryObj.add("ip", new JsonPrimitive(entry.getIp()));
+            entryObj.add("port", new JsonPrimitive(entry.getPort()));
+            entryObj.add("uuid", new JsonPrimitive(entry.getUuid().toString()));
+            serverEntries.add(entryObj);
         }
-        result.add("key-pair", keyPair);
-
-        // TODO: save servers
+        result.add("server-entries", serverEntries);
 
         return result;
     }
@@ -73,11 +77,11 @@ public class ServerConfiguration {
         this.uuid = uuid;
     }
 
-    public ServerEntry[] getServerEntries() {
+    public List<ServerEntry> getServerEntries() {
         return this.serverEntries;
     }
 
-    public void setServerEntries(ServerEntry[] serverEntries) {
+    public void setServerEntries(List<ServerEntry> serverEntries) {
         this.serverEntries = serverEntries;
     }
 
@@ -98,14 +102,6 @@ public class ServerConfiguration {
             throw new IllegalArgumentException("port must be between 0 and 65535");
         }
         this.port = port;
-    }
-
-    public KeyPair getKeyPair() {
-        return this.keyPair;
-    }
-
-    public void setKeyPair(KeyPair keyPair) {
-        this.keyPair = keyPair;
     }
 
 }

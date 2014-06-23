@@ -1,34 +1,36 @@
 
-package me.heldplayer.chat.framework.packet.auth;
+package me.heldplayer.chat.framework.packet.coms;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
+import me.heldplayer.chat.framework.RemoteConnection;
 import me.heldplayer.chat.framework.ServerConnection;
-import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
-import me.heldplayer.chat.framework.packet.ConnectionState;
 
 /**
- * Sent in response to {@link PacketAuthChallenge}, sends a different challenge
- * to the original server to also verify the server's identity
+ * Sent by a server when a server has successfully connected or sent for each
+ * server connected to the server when connecting to a server
+ * 
+ * The event gets propogated along all servers if the credentials are valid, if
+ * the server is already directly connected then it is ignored.
  */
-public class PacketAuthChallengeResponse extends ChatPacket {
+public class PacketRemoteServerConnected extends ChatPacket {
 
     private UUID uuid;
     private String challenge;
     private byte[] signature;
 
-    public PacketAuthChallengeResponse(UUID uuid, String challenge, byte[] signature) {
+    public PacketRemoteServerConnected(UUID uuid, String challenge, byte[] signature) {
         this.uuid = uuid;
         this.challenge = challenge;
         this.signature = signature;
     }
 
-    public PacketAuthChallengeResponse() {}
+    public PacketRemoteServerConnected() {}
 
     @Override
     public void write(DataOutputStream out) throws IOException {
@@ -61,28 +63,14 @@ public class PacketAuthChallengeResponse extends ChatPacket {
 
     @Override
     public void onPacket(ServerConnection connection) {
-        if (!this.uuid.equals(connection.getUuid())) {
-            connection.disconnect("Mismatched UUIDs (" + this.uuid + " vs. " + connection.getUuid() + ")");
-            return;
-        }
-        if (connection.getState() == ConnectionState.AUTHENTICATING) {
-            boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
-            if (verified) {
-                try {
-                    connection.setState(ConnectionState.AUTHENTICATED);
-                }
-                catch (AuthenticationException e) {
-                    connection.disconnect(e.getMessage());
-                    return;
-                }
-                connection.addPacket(new PacketAuthComplete());
-            }
-            else {
-                connection.disconnect("Verification of server failed");
-            }
+        boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
+        if (verified) {
+            RemoteConnection remoteConnection = new RemoteConnection(this.uuid);
+            connection.addRemoteConnection(remoteConnection);
+            connection.connectionsList.broadcastRemoteConnection(connection, remoteConnection, this.challenge, this.signature);
         }
         else {
-            connection.disconnect("Invalid connection state detected");
+            connection.disconnect("Unsafe connection detected");
         }
     }
 

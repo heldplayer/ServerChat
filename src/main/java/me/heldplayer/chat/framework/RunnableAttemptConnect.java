@@ -36,7 +36,9 @@ public class RunnableAttemptConnect implements Runnable {
                     UUID uuid = this.connectionsList.getConfiguration().getServerUUID();
                     String challenge = KeyUtils.getRandomChallenge();
                     byte[] signature = KeyUtils.getSignature(this.connection.connectionsList.getConfiguration().getPrivateKey(), challenge);
+                    this.connection.addPacket(this.connectionsList.getServerCredentials());
                     this.connection.addPacket(new PacketAuthChallenge(uuid, challenge, signature));
+                    this.connection.startThread();
                     return;
                 }
             }
