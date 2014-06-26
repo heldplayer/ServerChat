@@ -6,8 +6,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.RemoteServer;
 import me.heldplayer.chat.framework.LocalServer;
+import me.heldplayer.chat.framework.RemoteServer;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
@@ -74,5 +74,8 @@ public class PacketRemoteServerConnected extends ChatPacket {
             connection.disconnectServer("Unsafe connection detected");
         }
     }
+
+    @Override
+    public void onPacket(RemoteServer connection) {}
 
 }

@@ -118,6 +118,16 @@ public class LocalServer extends Server {
         return null;
     }
 
+    @Override
+    public ChatPacket createPacket(String id) {
+        return this.state.createPacket(id);
+    }
+
+    @Override
+    public String getId(ChatPacket packet) {
+        return this.state.getPacketName(packet.getClass());
+    }
+
     public void addRemoteConnection(RemoteServer connection) {
         this.remoteConnections.add(connection);
     }
@@ -131,7 +141,7 @@ public class LocalServer extends Server {
     }
 
     public boolean isDisconnecting() {
-        return disconnecting;
+        return this.disconnecting;
     }
 
     public void setDisconnecting(boolean disconnecting) {
@@ -139,7 +149,7 @@ public class LocalServer extends Server {
     }
 
     public Queue<ChatPacket> getOutboundPacketsQueue() {
-        return outboundPackets;
+        return this.outboundPackets;
     }
 
 }

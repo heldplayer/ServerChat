@@ -15,7 +15,7 @@ public final class RunnableReadWrite extends RunnableStoppable {
     private final LocalServer connection;
 
     private ByteArrayOutputStream boas = new ByteArrayOutputStream(32768);
-    private DataOutputStream dos = new DataOutputStream(boas); // Like a boas
+    private DataOutputStream dos = new DataOutputStream(this.boas); // Like a boas
 
     protected RunnableReadWrite(LocalServer connection) {
         this.connection = connection;
@@ -41,15 +41,15 @@ public final class RunnableReadWrite extends RunnableStoppable {
                 byte[] idBytes = new byte[in.readInt()];
                 in.readFully(idBytes);
                 String id = new String(idBytes);
+                byte[] data = new byte[in.readInt()];
+                in.readFully(data);
 
-                System.out.println(" < Got packet id '" + id + "'");
+                System.out.println(" < Got packet id '" + id + "' (" + data.length + " bytes)");
 
-                ChatPacket packet = this.connection.getState().createPacket(id);
+                ChatPacket packet = this.connection.createPacket(id);
                 if (packet == null) {
                     throw new RuntimeException("Bad packet in inbound (Id: " + id + "; State: " + this.connection.getState() + ")");
                 }
-                byte[] data = new byte[in.readInt()];
-                in.readFully(data);
                 DataInputStream dis;
                 packet.read(dis = new DataInputStream(new ByteArrayInputStream(data)));
                 dis.close(); // Close dis
@@ -61,9 +61,10 @@ public final class RunnableReadWrite extends RunnableStoppable {
             if (this.connection.getOutboundPacketsQueue().size() > 0) {
                 DataOutputStream out = this.connection.serverIO.getOut();
                 for (ChatPacket packet : this.connection.getOutboundPacketsQueue()) {
-                    String id = this.connection.getState().getPacketName(packet.getClass());
+                    String id = this.connection.getId(packet);
+                    packet.write(this.dos);
 
-                    System.out.println(" > Sending packet id '" + id + "'");
+                    System.out.println(" > Sending packet id '" + id + "' (" + this.dos.size() + " bytes)");
 
                     if (id == null) {
                         throw new RuntimeException("Bad packet in outbound (Type: " + packet.getClass() + "; State: " + this.connection.getState() + ")");
@@ -72,10 +73,9 @@ public final class RunnableReadWrite extends RunnableStoppable {
                     out.writeInt(idBytes.length);
                     out.write(idBytes);
 
-                    packet.write(dos);
-                    out.writeInt(boas.size());
-                    out.write(boas.toByteArray(), 0, boas.size());
-                    boas.reset();
+                    out.writeInt(this.boas.size());
+                    out.write(this.boas.toByteArray(), 0, this.boas.size());
+                    this.boas.reset();
                 }
                 this.connection.getOutboundPacketsQueue().clear();
             }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import me.heldplayer.chat.framework.LocalServer;
+import me.heldplayer.chat.framework.RemoteServer;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.util.KeyUtils;
 
@@ -77,5 +78,8 @@ public class PacketChallengeRequest extends ChatPacket {
             }
         }
     }
+
+    @Override
+    public void onPacket(RemoteServer connection) {}
 
 }

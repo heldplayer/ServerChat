@@ -6,6 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import me.heldplayer.chat.framework.LocalServer;
+import me.heldplayer.chat.framework.RemoteServer;
 
 public class PacketPing extends ChatPacket {
 
@@ -19,5 +20,8 @@ public class PacketPing extends ChatPacket {
 
     @Override
     public void onPacket(LocalServer connection) {}
+
+    @Override
+    public void onPacket(RemoteServer connection) {}
 
 }

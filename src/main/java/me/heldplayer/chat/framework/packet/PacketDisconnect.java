@@ -6,6 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import me.heldplayer.chat.framework.LocalServer;
+import me.heldplayer.chat.framework.RemoteServer;
 
 /**
  * Sent when a server disconnects, indicates that an attempt to reconnect should
@@ -48,5 +49,8 @@ public class PacketDisconnect extends ChatPacket {
             connection.connectionsList.removeServer(connection.getUuid());
         }
     }
+
+    @Override
+    public void onPacket(RemoteServer connection) {}
 
 }

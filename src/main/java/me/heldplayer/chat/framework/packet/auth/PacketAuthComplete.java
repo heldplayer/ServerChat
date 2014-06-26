@@ -6,6 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import me.heldplayer.chat.framework.LocalServer;
+import me.heldplayer.chat.framework.RemoteServer;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
@@ -39,5 +40,8 @@ public class PacketAuthComplete extends ChatPacket {
             connection.connectionsList.save();
         }
     }
+
+    @Override
+    public void onPacket(RemoteServer connection) {}
 
 }

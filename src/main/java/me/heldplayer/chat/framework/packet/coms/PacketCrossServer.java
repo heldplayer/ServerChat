@@ -11,25 +11,30 @@ import me.heldplayer.chat.framework.RemoteServer;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
 /**
- * Sent in response to {@link PacketChallengeRequest}
- * 
- * @see PacketChallengeRequest
+ * Packet sent to target a server that isn't directly connected to the server
  */
-public class PacketChallengeResponse extends ChatPacket {
+public class PacketCrossServer extends ChatPacket {
 
     private UUID target;
+    private UUID sender;
     private UUID[] stack;
-    private String challenge;
-    private byte[] signature;
+    private byte[] data;
 
-    public PacketChallengeResponse(UUID target, UUID[] stack, String challenge, byte[] signature) {
+    public PacketCrossServer(UUID target, UUID sender, byte[] data, UUID... stack) {
         this.target = target;
+        this.sender = sender;
         this.stack = stack;
-        this.challenge = challenge;
-        this.signature = signature;
     }
 
-    public PacketChallengeResponse() {}
+    public PacketCrossServer(UUID target, UUID sender, byte[] data, UUID[] stack, UUID stack0) {
+        this.target = target;
+        this.sender = sender;
+        this.stack = new UUID[stack.length + 1];
+        System.arraycopy(stack, 0, this.stack, 0, stack.length);
+        this.stack[stack.length] = stack0;
+    }
+
+    public PacketCrossServer() {}
 
     @Override
     public void write(DataOutputStream out) throws IOException {
@@ -37,6 +42,11 @@ public class PacketChallengeResponse extends ChatPacket {
         byte[] targetBytes = target.getBytes();
         out.writeInt(targetBytes.length);
         out.write(targetBytes);
+
+        String sender = this.target.toString();
+        byte[] senderBytes = sender.getBytes();
+        out.writeInt(senderBytes.length);
+        out.write(senderBytes);
 
         out.writeInt(this.stack.length);
         for (UUID uuid : this.stack) {
@@ -46,12 +56,8 @@ public class PacketChallengeResponse extends ChatPacket {
             out.write(uuidBytes);
         }
 
-        byte[] challengeBytes = this.challenge.getBytes();
-        out.writeInt(challengeBytes.length);
-        out.write(challengeBytes);
-
-        out.writeInt(this.signature.length);
-        out.write(this.signature);
+        out.writeInt(this.data.length);
+        out.write(this.data);
     }
 
     @Override
@@ -67,23 +73,20 @@ public class PacketChallengeResponse extends ChatPacket {
             this.stack[i] = UUID.fromString(new String(uuidBytes));
         }
 
-        byte[] challengeBytes = new byte[in.readInt()];
-        in.readFully(challengeBytes);
-        this.challenge = new String(challengeBytes);
-
-        this.signature = new byte[in.readInt()];
-        in.readFully(this.signature);
+        this.data = new byte[in.readInt()];
+        in.readFully(targetBytes);
     }
 
     @Override
     public void onPacket(LocalServer connection) {
-        if (this.stack.length > 1) {
-            UUID[] stack = new UUID[this.stack.length - 1];
-            System.arraycopy(this.stack, 0, stack, 0, stack.length);
-            connection.connectionsList.sendToServer(this.stack[stack.length], new PacketChallengeResponse(this.target, stack, this.challenge, this.signature));
+        if (connection.connectionsList.getConfiguration().getServerUUID().equals(this.target)) {
+            // It arrived!
         }
         else {
-            connection.connectionsList.sendToServer(this.stack[0], new PacketRemoteServerConnected(this.target, this.challenge, this.signature));
+            LocalServer remote = connection.connectionsList.getConnectionContaining(this.target);
+            if (remote != null) {
+                remote.addPacket(new PacketCrossServer(this.target, this.sender, data, this.stack, connection.getUuid()));
+            }
         }
     }
 

@@ -78,7 +78,8 @@ public class ConnectionsList {
                     Thread.sleep(50L);
                 }
                 catch (InterruptedException e1) {}
-                ConnectionsList.this.runnable.stop();;
+                ConnectionsList.this.runnable.stop();
+                ;
                 int count = 500;
                 try {
                     boolean goOn = true;

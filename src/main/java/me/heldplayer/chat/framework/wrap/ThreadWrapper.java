@@ -7,17 +7,17 @@ public class ThreadWrapper {
     private Thread thread;
 
     public void attemptStop() {
-        runnable.stop();
+        this.runnable.stop();
     }
 
     @SuppressWarnings("deprecation")
     public void forceStop() {
-        thread.stop();
+        this.thread.stop();
     }
 
     @SuppressWarnings("deprecation")
     public void forceStop(Throwable e) {
-        thread.stop(e);
+        this.thread.stop(e);
     }
 
     public boolean isAlive() {
