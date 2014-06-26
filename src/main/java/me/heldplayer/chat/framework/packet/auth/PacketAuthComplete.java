@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
@@ -25,7 +25,7 @@ public class PacketAuthComplete extends ChatPacket {
     public void read(DataInputStream in) throws IOException {}
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         if (connection.getState() == ConnectionState.AUTHENTICATED) {
             try {
                 connection.setState(ConnectionState.CONNECTED);

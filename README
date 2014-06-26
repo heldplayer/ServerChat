@@ -31,8 +31,7 @@ When a server first gets this mod installed, a UUID is made, together with a Key
 sent to the central repository.
 
 !! The connecting server initiates the request
-When a server tries to connect to a different server, they both request the UUID and a random number and its signature
-The other server requests the public key of the server with the UUID from the central repository and verifies that
-the signature of matches.
+When a server tries to connect to a different server, they both request the signature of a random string they send and verifies it matches
+by using the server's public key, stored in a central repository
 
 If it doesn't match, the connection is revoked, otherwise the connection is instantiated and the servers share details

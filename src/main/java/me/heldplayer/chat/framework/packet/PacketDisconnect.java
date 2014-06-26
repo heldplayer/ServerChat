@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 
 /**
  * Sent when a server disconnects, indicates that an attempt to reconnect should
@@ -41,7 +41,7 @@ public class PacketDisconnect extends ChatPacket {
     }
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         System.err.println("Server disconnected: " + this.reason);
         connection.disconnectServer(null);
         if (this.kicked) {

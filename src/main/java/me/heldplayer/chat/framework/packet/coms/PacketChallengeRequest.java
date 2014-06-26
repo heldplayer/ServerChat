@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.util.KeyUtils;
 
@@ -64,14 +64,14 @@ public class PacketChallengeRequest extends ChatPacket {
     }
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         if (connection.connectionsList.getConfiguration().getServerUUID().equals(this.target)) {
             String challenge = KeyUtils.getRandomChallenge();
             byte[] signature = KeyUtils.getSignature(connection.connectionsList.getConfiguration().getPrivateKey(), challenge);
             connection.addPacket(new PacketChallengeResponse(this.target, this.stack, challenge, signature));
         }
         else {
-            ServerConnection remote = connection.connectionsList.getConnectionContaining(this.target);
+            LocalServer remote = connection.connectionsList.getConnectionContaining(this.target);
             if (remote != null) {
                 remote.addPacket(new PacketChallengeRequest(this.target, this.stack, connection.getUuid()));
             }

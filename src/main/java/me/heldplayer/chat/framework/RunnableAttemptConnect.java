@@ -14,9 +14,9 @@ import me.heldplayer.chat.framework.util.KeyUtils;
 public class RunnableAttemptConnect implements Runnable {
 
     private final ConnectionsList connectionsList;
-    private final ServerConnection connection;
+    private final LocalServer connection;
 
-    RunnableAttemptConnect(ConnectionsList connectionsList, ServerConnection connection) {
+    protected RunnableAttemptConnect(ConnectionsList connectionsList, LocalServer connection) {
         this.connection = connection;
         this.connectionsList = connectionsList;
     }

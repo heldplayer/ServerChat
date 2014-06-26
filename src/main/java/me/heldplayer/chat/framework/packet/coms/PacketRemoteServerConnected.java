@@ -6,8 +6,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.RemoteConnection;
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.RemoteServer;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.auth.ServerAuthentication;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
@@ -62,10 +62,10 @@ public class PacketRemoteServerConnected extends ChatPacket {
     }
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
         if (verified) {
-            RemoteConnection remoteConnection = new RemoteConnection(this.uuid);
+            RemoteServer remoteConnection = new RemoteServer(this.uuid);
             System.out.println(String.format("Server with UUID %s connected remotely through %s", this.uuid, connection.getUuid()));
             connection.addRemoteConnection(remoteConnection);
             connection.connectionsList.broadcastRemoteConnection(connection, remoteConnection, this.challenge, this.signature);

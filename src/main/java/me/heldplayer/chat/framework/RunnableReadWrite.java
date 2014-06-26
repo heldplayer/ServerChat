@@ -1,106 +1,103 @@
 
 package me.heldplayer.chat.framework;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 import me.heldplayer.chat.framework.packet.ChatPacket;
+import me.heldplayer.chat.framework.wrap.RunnableStoppable;
 
-public class RunnableReadWrite implements Runnable {
+public final class RunnableReadWrite extends RunnableStoppable {
 
-    boolean running;
-    private final ConnectionsList connectionsList;
-    private final ServerConnection connection;
+    private final LocalServer connection;
 
-    RunnableReadWrite(ConnectionsList connectionsList, ServerConnection connection) {
-        this.running = true;
+    private ByteArrayOutputStream boas = new ByteArrayOutputStream(32768);
+    private DataOutputStream dos = new DataOutputStream(boas); // Like a boas
+
+    protected RunnableReadWrite(LocalServer connection) {
         this.connection = connection;
-        this.connectionsList = connectionsList;
     }
 
     @Override
-    public void run() {
+    public void doRun() {
         try {
-            while (this.running || this.connection.disconnecting) {
-                if (this.connection.socket.isClosed()) {
-                    System.out.println("Connection lost");
+            if (this.connection.serverIO.isClosed()) {
+                System.out.println("Connection lost");
 
-                    return;
-                }
-
-                if (this.connection.disconnecting) {
-                    this.running = false;
-                    this.connection.disconnecting = false;
-                }
-
-                // Read
-                DataInputStream in = this.connection.in;
-                while (in.available() > 0) {
-                    byte[] idBytes = new byte[in.readInt()];
-                    in.readFully(idBytes);
-                    String id = new String(idBytes);
-
-                    System.out.println(" < Got packet id '" + id + "'");
-
-                    ChatPacket packet = this.connection.getState().createPacket(id);
-                    if (packet == null) {
-                        throw new RuntimeException("Bad packet received from server");
-                    }
-                    packet.read(in);
-
-                    packet.onPacket(this.connection);
-                }
-
-                // Write
-                if (this.connection.outboundPackets.size() > 0) {
-                    DataOutputStream out = this.connection.out;
-                    for (ChatPacket packet : this.connection.outboundPackets) {
-                        String id = this.connection.getState().getPacketName(packet.getClass());
-
-                        System.out.println(" > Sending packet id '" + id + "'");
-
-                        if (id == null) {
-                            throw new RuntimeException("Bad packet sent to server");
-                        }
-                        byte[] idBytes = id.getBytes();
-                        out.writeInt(idBytes.length);
-                        out.write(idBytes);
-                        packet.write(out);
-                    }
-                    this.connection.outboundPackets.clear();
-                }
-
-                Thread.sleep(10L);
+                return;
             }
 
+            if (this.connection.isDisconnecting()) {
+                this.stop();
+                this.connection.setDisconnecting(false);
+            }
+
+            // Read
+            DataInputStream in = this.connection.serverIO.getIn();
+            while (in.available() > 0) {
+                byte[] idBytes = new byte[in.readInt()];
+                in.readFully(idBytes);
+                String id = new String(idBytes);
+
+                System.out.println(" < Got packet id '" + id + "'");
+
+                ChatPacket packet = this.connection.getState().createPacket(id);
+                if (packet == null) {
+                    throw new RuntimeException("Bad packet in inbound (Id: " + id + "; State: " + this.connection.getState() + ")");
+                }
+                byte[] data = new byte[in.readInt()];
+                in.readFully(data);
+                DataInputStream dis;
+                packet.read(dis = new DataInputStream(new ByteArrayInputStream(data)));
+                dis.close(); // Close dis
+
+                packet.onPacket(this.connection);
+            }
+
+            // Write
+            if (this.connection.getOutboundPacketsQueue().size() > 0) {
+                DataOutputStream out = this.connection.serverIO.getOut();
+                for (ChatPacket packet : this.connection.getOutboundPacketsQueue()) {
+                    String id = this.connection.getState().getPacketName(packet.getClass());
+
+                    System.out.println(" > Sending packet id '" + id + "'");
+
+                    if (id == null) {
+                        throw new RuntimeException("Bad packet in outbound (Type: " + packet.getClass() + "; State: " + this.connection.getState() + ")");
+                    }
+                    byte[] idBytes = id.getBytes();
+                    out.writeInt(idBytes.length);
+                    out.write(idBytes);
+
+                    packet.write(dos);
+                    out.writeInt(boas.size());
+                    out.write(boas.toByteArray(), 0, boas.size());
+                    boas.reset();
+                }
+                this.connection.getOutboundPacketsQueue().clear();
+            }
         }
         catch (Throwable e) {
             throw new RuntimeException(e);
         }
         finally {
-            this.running = false;
-            this.connection.disconnecting = false;
+            this.stop();
+            this.connection.setDisconnecting(false);
+            this.connection.serverIO.close();
 
-            if (this.connection.in != null) {
-                try {
-                    this.connection.in.close();
-                }
-                catch (IOException e) {}
+            try {
+                this.dos.close();
             }
-            if (this.connection.out != null) {
-                try {
-                    this.connection.out.close();
-                }
-                catch (IOException e) {}
-            }
-            if (this.connection.socket != null) {
-                try {
-                    this.connection.socket.close();
-                }
-                catch (IOException e) {}
-            }
+            catch (IOException e) {}
         }
+    }
+
+    @Override
+    public boolean shouldRun() {
+        return super.shouldRun() || this.connection.isDisconnecting();
     }
 
 }

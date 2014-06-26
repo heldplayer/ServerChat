@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.config.ServerEntry;
 
 class RunnableConsoleReader implements Runnable {
@@ -38,7 +38,7 @@ class RunnableConsoleReader implements Runnable {
                     ServerEntry entry = new ServerEntry();
                     entry.setIp(ip);
                     entry.setPort(Integer.parseInt(port));
-                    ConnectionTest.connections.addConnection(new ServerConnection(ConnectionTest.connections, entry));
+                    ConnectionTest.connections.addConnection(new LocalServer(ConnectionTest.connections, entry));
                     System.out.println("Connecting to " + ip + ":" + port);
                 }
                 else {

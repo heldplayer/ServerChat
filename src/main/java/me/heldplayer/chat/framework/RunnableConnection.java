@@ -6,39 +6,35 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class RunnableConnection implements Runnable {
+import me.heldplayer.chat.framework.wrap.RunnableStoppable;
 
-    private boolean running;
+public class RunnableConnection extends RunnableStoppable {
+
     private final ServerSocket serverSocket;
     private final ConnectionsList connectionsList;
 
-    RunnableConnection(ConnectionsList connectionsList, ServerSocket socket) {
-        this.running = true;
+    protected RunnableConnection(ConnectionsList connectionsList, ServerSocket socket) {
         this.serverSocket = socket;
         this.connectionsList = connectionsList;
     }
 
     @Override
-    public void run() {
-        while (this.running) {
-            try {
-                Socket socket = this.serverSocket.accept();
-                System.err.println("==================== Got connection!");
-                ServerConnection connection = new ServerConnection(this.connectionsList, socket);
-                this.connectionsList.addConnection(connection);
-
-                Thread.sleep(10L);
-            }
-            catch (SocketException e) {}
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            catch (InterruptedException e) {}
+    public void doRun() {
+        try {
+            Socket socket = this.serverSocket.accept();
+            System.err.println("==================== Got connection!");
+            LocalServer connection = new LocalServer(this.connectionsList, socket);
+            this.connectionsList.addConnection(connection);
+        }
+        catch (SocketException e) {}
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    public void stopListening() {
-        this.running = false;
+    @Override
+    public void stop() {
+        super.stop();
         try {
             this.serverSocket.close();
         }

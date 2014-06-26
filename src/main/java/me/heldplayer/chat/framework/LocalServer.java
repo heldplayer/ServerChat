@@ -1,38 +1,36 @@
 
 package me.heldplayer.chat.framework;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.config.ServerEntry;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.packet.PacketDisconnect;
+import me.heldplayer.chat.framework.wrap.ServerIOWrapper;
+import me.heldplayer.chat.framework.wrap.ThreadWrapper;
 
-public class ServerConnection {
+public class LocalServer extends Server {
 
-    Socket socket;
-    DataInputStream in;
-    DataOutputStream out;
+    public final ServerIOWrapper serverIO = new ServerIOWrapper();
+    public final ThreadWrapper thread = new ThreadWrapper();
     private ConnectionState state = ConnectionState.DISCONNECTED;
 
     public final ConnectionsList connectionsList;
     public ServerEntry entry;
-    private ArrayList<RemoteConnection> remoteConnections = new ArrayList<RemoteConnection>();
-    RunnableReadWrite runnable;
-    Thread thread;
+    private ArrayList<RemoteServer> remoteConnections = new ArrayList<RemoteServer>();
 
-    boolean disconnecting;
-    LinkedList<ChatPacket> outboundPackets = new LinkedList<ChatPacket>();
+    private boolean disconnecting;
+    private Queue<ChatPacket> outboundPackets = new ConcurrentLinkedQueue<ChatPacket>();
 
-    public ServerConnection(ConnectionsList connectionsList, Socket socket) throws IOException {
+    public LocalServer(ConnectionsList connectionsList, Socket socket) throws IOException {
         this.connectionsList = connectionsList;
         this.setInOut(socket);
         this.state = ConnectionState.AUTHENTICATING;
@@ -49,7 +47,7 @@ public class ServerConnection {
         this.startThread();
     }
 
-    public ServerConnection(ConnectionsList connectionsList, ServerEntry entry) {
+    public LocalServer(ConnectionsList connectionsList, ServerEntry entry) {
         this.connectionsList = connectionsList;
 
         this.state = ConnectionState.CONNECTING;
@@ -65,35 +63,11 @@ public class ServerConnection {
     }
 
     protected void setInOut(Socket socket) throws IOException {
-        if (this.socket != null) {
-            try {
-                this.socket.close();
-            }
-            catch (IOException e) {}
-        }
-        if (this.in != null) {
-            try {
-                this.in.close();
-            }
-            catch (IOException e) {}
-        }
-        if (this.out != null) {
-            try {
-                this.out.close();
-            }
-            catch (IOException e) {}
-        }
-        this.socket = socket;
-        this.in = new DataInputStream(socket.getInputStream());
-        this.out = new DataOutputStream(socket.getOutputStream());
+        this.serverIO.setIO(socket);
     }
 
     public void startThread() {
-        if (this.thread == null || !this.thread.isAlive()) {
-            this.thread = new Thread(this.runnable = new RunnableReadWrite(this.connectionsList, this), "ServerChat read/write thread");
-            this.thread.setDaemon(true);
-            this.thread.start();
-        }
+        this.thread.start(new RunnableReadWrite(this), "ServerChat read/write thread");
     }
 
     public ConnectionState getState() {
@@ -136,6 +110,7 @@ public class ServerConnection {
         this.connectionsList.removeServer(this.getUuid());
     }
 
+    @Override
     public UUID getUuid() {
         if (this.entry != null) {
             return this.entry.getUuid();
@@ -143,16 +118,28 @@ public class ServerConnection {
         return null;
     }
 
-    public void addRemoteConnection(RemoteConnection connection) {
+    public void addRemoteConnection(RemoteServer connection) {
         this.remoteConnections.add(connection);
     }
 
-    public void removeRemoteConnection(RemoteConnection connection) {
+    public void removeRemoteConnection(RemoteServer connection) {
         this.remoteConnections.remove(connection);
     }
 
-    public List<RemoteConnection> getRemoteConnections() {
+    public List<RemoteServer> getRemoteConnections() {
         return this.remoteConnections;
+    }
+
+    public boolean isDisconnecting() {
+        return disconnecting;
+    }
+
+    public void setDisconnecting(boolean disconnecting) {
+        this.disconnecting = disconnecting;
+    }
+
+    public Queue<ChatPacket> getOutboundPacketsQueue() {
+        return outboundPackets;
     }
 
 }

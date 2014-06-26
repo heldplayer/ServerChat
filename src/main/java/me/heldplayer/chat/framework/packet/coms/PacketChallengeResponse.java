@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
 /**
@@ -75,7 +75,7 @@ public class PacketChallengeResponse extends ChatPacket {
     }
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         if (this.stack.length > 1) {
             UUID[] stack = new UUID[this.stack.length - 1];
             System.arraycopy(this.stack, 0, stack, 0, stack.length);

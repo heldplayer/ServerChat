@@ -25,6 +25,7 @@ public enum ConnectionState {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
             this.registerPacket("ping", PacketPing.class);
+
             this.registerPacket("authChallenge", PacketAuthChallenge.class);
             this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
             this.registerPacket("serverCredentials", PacketServerCredentials.class);
@@ -34,7 +35,8 @@ public enum ConnectionState {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
             this.registerPacket("ping", PacketPing.class);
-            this.registerPacket("authChallenge", PacketAuthChallenge.class);
+
+            //this.registerPacket("authChallenge", PacketAuthChallenge.class);
             this.registerPacket("authChallengeResponse", PacketAuthChallengeResponse.class);
             this.registerPacket("authComplete", PacketAuthComplete.class);
             this.registerPacket("serverCredentials", PacketServerCredentials.class);
@@ -44,6 +46,7 @@ public enum ConnectionState {
         {
             this.registerPacket("disconnect", PacketDisconnect.class);
             this.registerPacket("ping", PacketPing.class);
+
             this.registerPacket("authComplete", PacketAuthComplete.class);
 
             this.registerPacket("challengeRequest", PacketChallengeRequest.class);

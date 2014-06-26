@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 
 public class PacketPing extends ChatPacket {
 
@@ -18,6 +18,6 @@ public class PacketPing extends ChatPacket {
     public void read(DataInputStream in) throws IOException {}
 
     @Override
-    public void onPacket(ServerConnection connection) {}
+    public void onPacket(LocalServer connection) {}
 
 }

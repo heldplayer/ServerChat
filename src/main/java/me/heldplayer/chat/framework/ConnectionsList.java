@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import me.heldplayer.chat.framework.config.IServerConfiguration;
 import me.heldplayer.chat.framework.config.ServerEntry;
 import me.heldplayer.chat.framework.packet.ChatPacket;
+import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.packet.auth.PacketServerCredentials;
 import me.heldplayer.chat.framework.packet.coms.PacketChallengeRequest;
 import me.heldplayer.chat.framework.packet.coms.PacketRemoteServerConnected;
@@ -28,8 +29,8 @@ public class ConnectionsList {
     private RunnableConnection runnable;
     private Thread thread;
 
-    private Queue<ServerConnection> connections;
-    private Collection<ServerConnection> roConnections;
+    private Queue<LocalServer> connections;
+    private Collection<LocalServer> roConnections;
     private File saveDir;
 
     public ConnectionsList(IServerConfiguration config, File saveDir) {
@@ -38,7 +39,7 @@ public class ConnectionsList {
         }
         this.saveDir = saveDir;
 
-        this.connections = new ConcurrentLinkedQueue<ServerConnection>();
+        this.connections = new ConcurrentLinkedQueue<LocalServer>();
         this.roConnections = Collections.unmodifiableCollection(this.connections);
         this.config = config;
         this.config.load(saveDir);
@@ -60,7 +61,7 @@ public class ConnectionsList {
         this.thread.start();
 
         for (ServerEntry entry : this.config.getServers()) {
-            ServerConnection connection = new ServerConnection(this, entry);
+            LocalServer connection = new LocalServer(this, entry);
             this.connections.add(connection);
         }
     }
@@ -70,14 +71,14 @@ public class ConnectionsList {
             @Override
             @SuppressWarnings("deprecation")
             public void run() {
-                for (ServerConnection connection : ConnectionsList.this.connections) {
+                for (LocalServer connection : ConnectionsList.this.connections) {
                     connection.disconnectServer("Shutting down...");
                 }
                 try {
                     Thread.sleep(50L);
                 }
                 catch (InterruptedException e1) {}
-                ConnectionsList.this.runnable.stopListening();
+                ConnectionsList.this.runnable.stop();;
                 int count = 500;
                 try {
                     boolean goOn = true;
@@ -85,7 +86,7 @@ public class ConnectionsList {
                         count--;
 
                         goOn = ConnectionsList.this.thread.isAlive();
-                        for (ServerConnection connection : ConnectionsList.this.connections) {
+                        for (LocalServer connection : ConnectionsList.this.connections) {
                             if (connection.thread != null) {
                                 goOn |= connection.thread.isAlive();
                             }
@@ -101,9 +102,9 @@ public class ConnectionsList {
                     ConnectionsList.this.thread.stop(new RuntimeException("Stopping connection"));
                 }
 
-                for (ServerConnection connection : ConnectionsList.this.connections) {
+                for (LocalServer connection : ConnectionsList.this.connections) {
                     if (connection.thread != null && connection.thread.isAlive()) {
-                        connection.thread.stop(new RuntimeException("Stopping connection"));
+                        connection.thread.forceStop(new RuntimeException("Stopping connection"));
                     }
                 }
             }
@@ -117,11 +118,11 @@ public class ConnectionsList {
         }
     }
 
-    public void addConnection(ServerConnection connection) {
+    public void addConnection(LocalServer connection) {
         this.connections.add(connection);
     }
 
-    public void removeConnection(ServerConnection connection) {
+    public void removeConnection(LocalServer connection) {
         this.connections.remove(connection);
     }
 
@@ -147,7 +148,7 @@ public class ConnectionsList {
         this.save();
     }
 
-    public Collection<ServerConnection> getConnections() {
+    public Collection<LocalServer> getConnections() {
         return this.roConnections;
     }
 
@@ -163,30 +164,30 @@ public class ConnectionsList {
         return new PacketServerCredentials(this.config.getServerUUID(), this.config.getHost(), this.config.getPort());
     }
 
-    public void broadcastConnection(ServerConnection connection, String challenge, byte[] signature) {
-        for (ServerConnection currConnection : this.connections) {
+    public void broadcastConnection(LocalServer connection, String challenge, byte[] signature) {
+        for (LocalServer currConnection : this.connections) {
             if (currConnection != connection && currConnection.getUuid().equals(connection.getUuid())) {
                 currConnection.addPacket(new PacketRemoteServerConnected(connection.getUuid(), challenge, signature));
             }
         }
     }
 
-    public void broadcastRemoteConnection(ServerConnection origin, RemoteConnection connection, String challenge, byte[] signature) {
-        for (ServerConnection currServerConnection : this.connections) {
+    public void broadcastRemoteConnection(LocalServer origin, RemoteServer connection, String challenge, byte[] signature) {
+        for (LocalServer currServerConnection : this.connections) {
             if (currServerConnection.getUuid().equals(connection.uuid)) {
                 return;
             }
             if (currServerConnection.getUuid().equals(origin.getUuid())) {
                 continue;
             }
-            for (RemoteConnection currRemoteConnection : currServerConnection.getRemoteConnections()) {
+            for (RemoteServer currRemoteConnection : currServerConnection.getRemoteConnections()) {
                 if (currRemoteConnection.uuid.equals(connection.uuid)) {
                     return;
                 }
             }
         }
 
-        for (ServerConnection currServerConnection : this.connections) {
+        for (LocalServer currServerConnection : this.connections) {
             if (currServerConnection.getUuid().equals(origin.getUuid())) {
                 continue;
             }
@@ -194,9 +195,12 @@ public class ConnectionsList {
         }
     }
 
-    public void synchronizeData(ServerConnection connection) {
+    public void synchronizeData(LocalServer connection) {
         // Tell the new server about all connected servers
-        for (ServerConnection currServerConnection : this.connections) {
+        for (LocalServer currServerConnection : this.connections) {
+            if (currServerConnection.getState() != ConnectionState.CONNECTED) {
+                continue;
+            }
             if (currServerConnection.getUuid().equals(connection.getUuid())) {
                 continue;
             }
@@ -204,10 +208,11 @@ public class ConnectionsList {
             System.out.println(String.format("Telling %s about locally connected server %s", connection.getUuid(), currServerConnection.getUuid()));
             currServerConnection.addPacket(new PacketChallengeRequest(currServerConnection.getUuid(), connection.getUuid()));
 
+            // Also tell the other servers about the new server
             System.out.println(String.format("Telling locally connected server %s about %s", currServerConnection.getUuid(), connection.getUuid()));
             connection.addPacket(new PacketChallengeRequest(connection.getUuid(), currServerConnection.getUuid()));
 
-            for (RemoteConnection currRemoteConnection : currServerConnection.getRemoteConnections()) {
+            for (RemoteServer currRemoteConnection : currServerConnection.getRemoteConnections()) {
                 if (currRemoteConnection.uuid.equals(connection.getUuid())) {
                     continue;
                 }
@@ -220,7 +225,7 @@ public class ConnectionsList {
     }
 
     public void sendToServer(UUID uuid, ChatPacket packet) {
-        for (ServerConnection server : this.connections) {
+        for (LocalServer server : this.connections) {
             if (server.getUuid().equals(uuid)) {
                 server.addPacket(packet);
 
@@ -229,13 +234,13 @@ public class ConnectionsList {
         }
     }
 
-    public ServerConnection getConnectionContaining(UUID uuid) {
-        for (ServerConnection server : this.connections) {
+    public LocalServer getConnectionContaining(UUID uuid) {
+        for (LocalServer server : this.connections) {
             if (server.getUuid().equals(uuid)) {
                 return server;
             }
 
-            for (RemoteConnection remoteConnection : server.getRemoteConnections()) {
+            for (RemoteServer remoteConnection : server.getRemoteConnections()) {
                 if (remoteConnection.uuid.equals(uuid)) {
                     return server;
                 }
@@ -248,7 +253,7 @@ public class ConnectionsList {
     public void save() {
         List<ServerEntry> entries = this.config.getServers();
 
-        for (ServerConnection connection : this.connections) {
+        for (LocalServer connection : this.connections) {
             boolean present = false;
 
             if (connection.entry.getUuid() == null) {

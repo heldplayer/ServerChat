@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import me.heldplayer.chat.framework.ServerConnection;
+import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.config.ServerEntry;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
@@ -52,7 +52,7 @@ public class PacketServerCredentials extends ChatPacket {
     }
 
     @Override
-    public void onPacket(ServerConnection connection) {
+    public void onPacket(LocalServer connection) {
         if (connection.entry != null) {
             if (connection.getUuid() != null && !connection.getUuid().equals(this.uuid)) {
                 connection.kickServer("UUID already sent");
