@@ -8,25 +8,26 @@ import java.util.UUID;
 
 import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.RemoteServer;
+import me.heldplayer.chat.framework.Server;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 
 /**
  * Packet sent to target a server that isn't directly connected to the server
  */
-public class PacketCrossServer extends ChatPacket {
+public class PacketCrossServerFailed extends ChatPacket {
 
     private UUID target;
     private UUID sender;
     private UUID[] stack;
     private byte[] data;
 
-    public PacketCrossServer(UUID target, UUID sender, byte[] data, UUID... stack) {
+    public PacketCrossServerFailed(UUID target, UUID sender, byte[] data, UUID... stack) {
         this.target = target;
         this.sender = sender;
         this.stack = stack;
     }
 
-    public PacketCrossServer(UUID target, UUID sender, byte[] data, UUID[] stack, UUID stack0) {
+    public PacketCrossServerFailed(UUID target, UUID sender, byte[] data, UUID[] stack, UUID stack0) {
         this.target = target;
         this.sender = sender;
         this.stack = new UUID[stack.length + 1];
@@ -34,7 +35,7 @@ public class PacketCrossServer extends ChatPacket {
         this.stack[stack.length] = stack0;
     }
 
-    public PacketCrossServer() {}
+    public PacketCrossServerFailed() {}
 
     @Override
     public void write(DataOutputStream out) throws IOException {
@@ -79,21 +80,16 @@ public class PacketCrossServer extends ChatPacket {
 
     @Override
     public void onPacket(LocalServer connection) {
-        if (connection.connectionsList.getConfiguration().getServerUUID().equals(this.target)) {
-            // It arrived!
-        }
-        else {
-            LocalServer remote = connection.connectionsList.getConnectionContaining(this.target, this.stack);
-            if (remote != null) {
-                remote.addPacket(new PacketCrossServer(this.target, this.sender, this.data, this.stack, connection.getUuid()));
-            }
-            else {
-                connection.connectionsList.sendToServer(this.sender, new PacketCrossServerFailed(this.target, this.sender, this.data, this.stack));
-            }
-        }
+        this.onPacket((Server) connection);
     }
 
     @Override
-    public void onPacket(RemoteServer connection) {}
+    public void onPacket(RemoteServer connection) {
+        this.onPacket((Server) connection);
+    }
+
+    private void onPacket(Server connection) {
+
+    }
 
 }

@@ -1,6 +1,8 @@
 
 package me.heldplayer.chat.framework;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,6 +21,7 @@ import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.packet.auth.PacketServerCredentials;
 import me.heldplayer.chat.framework.packet.coms.PacketChallengeRequest;
+import me.heldplayer.chat.framework.packet.coms.PacketCrossServer;
 import me.heldplayer.chat.framework.packet.coms.PacketRemoteServerConnected;
 import me.heldplayer.chat.framework.util.KeyUtils;
 
@@ -32,6 +35,9 @@ public class ConnectionsList {
     private Queue<LocalServer> connections;
     private Collection<LocalServer> roConnections;
     private File saveDir;
+
+    private ByteArrayOutputStream boas = new ByteArrayOutputStream(32768);
+    private DataOutputStream dos = new DataOutputStream(this.boas);
 
     public ConnectionsList(IServerConfiguration config, File saveDir) {
         if (config.isOfflineMode()) {
@@ -175,14 +181,14 @@ public class ConnectionsList {
 
     public void broadcastRemoteConnection(LocalServer origin, RemoteServer connection, String challenge, byte[] signature) {
         for (LocalServer currServerConnection : this.connections) {
-            if (currServerConnection.getUuid().equals(connection.uuid)) {
+            if (currServerConnection.getUuid().equals(connection.getUuid())) {
                 return;
             }
             if (currServerConnection.getUuid().equals(origin.getUuid())) {
                 continue;
             }
             for (RemoteServer currRemoteConnection : currServerConnection.getRemoteConnections()) {
-                if (currRemoteConnection.uuid.equals(connection.uuid)) {
+                if (currRemoteConnection.getUuid().equals(connection.getUuid())) {
                     return;
                 }
             }
@@ -192,7 +198,7 @@ public class ConnectionsList {
             if (currServerConnection.getUuid().equals(origin.getUuid())) {
                 continue;
             }
-            currServerConnection.addPacket(new PacketRemoteServerConnected(connection.uuid, challenge, signature));
+            currServerConnection.addPacket(new PacketRemoteServerConnected(connection.getUuid(), challenge, signature));
         }
     }
 
@@ -214,13 +220,13 @@ public class ConnectionsList {
             connection.addPacket(new PacketChallengeRequest(connection.getUuid(), currServerConnection.getUuid()));
 
             for (RemoteServer currRemoteConnection : currServerConnection.getRemoteConnections()) {
-                if (currRemoteConnection.uuid.equals(connection.getUuid())) {
+                if (currRemoteConnection.getUuid().equals(connection.getUuid())) {
                     continue;
                 }
 
                 System.out.println(String.format("Telling %s about remotely connected server %s", connection.getUuid(), currServerConnection.getUuid()));
 
-                currServerConnection.addPacket(new PacketChallengeRequest(currRemoteConnection.uuid, connection.getUuid()));
+                currServerConnection.addPacket(new PacketChallengeRequest(currRemoteConnection.getUuid(), connection.getUuid()));
             }
         }
     }
@@ -230,19 +236,40 @@ public class ConnectionsList {
             if (server.getUuid().equals(uuid)) {
                 server.addPacket(packet);
 
-                break;
+                return;
+            }
+
+            for (RemoteServer remoteConnection : server.getRemoteConnections()) {
+                if (remoteConnection.getUuid().equals(uuid)) {
+                    try {
+                        packet.write(this.dos);
+                        byte[] data = this.boas.toByteArray();
+                        this.boas.reset();
+                        server.addPacket(new PacketCrossServer(uuid, this.getConfiguration().getServerUUID(), data));
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
             }
         }
     }
 
-    public LocalServer getConnectionContaining(UUID uuid) {
+    public LocalServer getConnectionContaining(UUID uuid, UUID... blacklist) {
         for (LocalServer server : this.connections) {
             if (server.getUuid().equals(uuid)) {
                 return server;
             }
 
+            remotes:
             for (RemoteServer remoteConnection : server.getRemoteConnections()) {
-                if (remoteConnection.uuid.equals(uuid)) {
+                for (UUID blacklisted : blacklist) {
+                    if (blacklisted.equals(remoteConnection.getUuid())) {
+                        continue remotes;
+                    }
+                }
+                if (remoteConnection.getUuid().equals(uuid)) {
                     return server;
                 }
             }

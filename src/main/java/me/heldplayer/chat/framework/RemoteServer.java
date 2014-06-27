@@ -8,7 +8,7 @@ import me.heldplayer.chat.framework.packet.ConnectionState;
 
 public class RemoteServer extends Server {
 
-    public final UUID uuid;
+    private final UUID uuid;
 
     public RemoteServer(UUID uuid) {
         this.uuid = uuid;
