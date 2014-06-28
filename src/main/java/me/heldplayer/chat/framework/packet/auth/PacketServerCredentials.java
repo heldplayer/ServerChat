@@ -27,28 +27,15 @@ public class PacketServerCredentials extends ChatPacket {
 
     @Override
     public void write(DataOutputStream out) throws IOException {
-        String uuid = this.uuid.toString();
-        byte[] uuidBytes = uuid.getBytes();
-        out.writeInt(uuidBytes.length);
-        out.write(uuidBytes);
-
-        byte[] reasonBytes = this.host.getBytes();
-        out.writeInt(reasonBytes.length);
-        out.write(reasonBytes);
-
+        out.writeUTF(this.uuid.toString());
+        out.writeUTF(this.host);
         out.writeInt(this.port);
     }
 
     @Override
     public void read(DataInputStream in) throws IOException {
-        byte[] uuidBytes = new byte[in.readInt()];
-        in.readFully(uuidBytes);
-        this.uuid = UUID.fromString(new String(uuidBytes));
-
-        byte[] reasonBytes = new byte[in.readInt()];
-        in.readFully(reasonBytes);
-        this.host = new String(reasonBytes);
-
+        this.uuid = UUID.fromString(in.readUTF());
+        this.host = in.readUTF();
         this.port = in.readInt();
     }
 

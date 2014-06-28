@@ -26,19 +26,13 @@ public class PacketDisconnect extends ChatPacket {
     @Override
     public void write(DataOutputStream out) throws IOException {
         out.writeBoolean(this.kicked);
-
-        byte[] reasonBytes = this.reason.getBytes();
-        out.writeInt(reasonBytes.length);
-        out.write(reasonBytes);
+        out.writeUTF(this.reason);
     }
 
     @Override
     public void read(DataInputStream in) throws IOException {
         this.kicked = in.readBoolean();
-
-        byte[] reasonBytes = new byte[in.readInt()];
-        in.readFully(reasonBytes);
-        this.reason = new String(reasonBytes);
+        this.reason = in.readUTF();
     }
 
     @Override

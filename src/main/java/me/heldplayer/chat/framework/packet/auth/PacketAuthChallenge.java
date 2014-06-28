@@ -33,29 +33,16 @@ public class PacketAuthChallenge extends ChatPacket {
 
     @Override
     public void write(DataOutputStream out) throws IOException {
-        String uuid = this.uuid.toString();
-        byte[] uuidBytes = uuid.getBytes();
-        out.writeInt(uuidBytes.length);
-        out.write(uuidBytes);
-
-        byte[] challengeBytes = this.challenge.getBytes();
-        out.writeInt(challengeBytes.length);
-        out.write(challengeBytes);
-
+        out.writeUTF(this.uuid.toString());
+        out.writeUTF(this.challenge);
         out.writeInt(this.signature.length);
         out.write(this.signature);
     }
 
     @Override
     public void read(DataInputStream in) throws IOException {
-        byte[] uuidBytes = new byte[in.readInt()];
-        in.readFully(uuidBytes);
-        this.uuid = UUID.fromString(new String(uuidBytes));
-
-        byte[] challengeBytes = new byte[in.readInt()];
-        in.readFully(challengeBytes);
-        this.challenge = new String(challengeBytes);
-
+        this.uuid = UUID.fromString(in.readUTF());
+        this.challenge = in.readUTF();
         this.signature = new byte[in.readInt()];
         in.readFully(this.signature);
     }

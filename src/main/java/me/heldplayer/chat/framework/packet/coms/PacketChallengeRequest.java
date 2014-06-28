@@ -36,31 +36,21 @@ public class PacketChallengeRequest extends ChatPacket {
 
     @Override
     public void write(DataOutputStream out) throws IOException {
-        String target = this.target.toString();
-        byte[] targetBytes = target.getBytes();
-        out.writeInt(targetBytes.length);
-        out.write(targetBytes);
+        out.writeUTF(this.target.toString());
 
         out.writeInt(this.stack.length);
         for (UUID uuid : this.stack) {
-            String uuidStr = uuid.toString();
-            byte[] uuidBytes = uuidStr.getBytes();
-            out.writeInt(uuidBytes.length);
-            out.write(uuidBytes);
+            out.writeUTF(uuid.toString());
         }
     }
 
     @Override
     public void read(DataInputStream in) throws IOException {
-        byte[] targetBytes = new byte[in.readInt()];
-        in.readFully(targetBytes);
-        this.target = UUID.fromString(new String(targetBytes));
+        this.target = UUID.fromString(in.readUTF());
 
         this.stack = new UUID[in.readInt()];
         for (int i = 0; i < this.stack.length; i++) {
-            byte[] uuidBytes = new byte[in.readInt()];
-            in.readFully(uuidBytes);
-            this.stack[i] = UUID.fromString(new String(uuidBytes));
+            this.stack[i] = UUID.fromString(in.readUTF());
         }
     }
 
