@@ -23,20 +23,12 @@ public final class RunnableReadWrite extends RunnableStoppable {
 
     @Override
     public void doRun() {
-        if (this.connection.isDisconnecting()) {
-            this.stop();
-        }
-
         try {
             if (this.connection.serverIO.isClosed()) {
                 this.connection.log.info("Connection lost");
+                this.stop();
 
                 return;
-            }
-
-            if (this.connection.isDisconnecting()) {
-                this.stop();
-                this.connection.setDisconnecting(false);
             }
 
             // Read
@@ -78,6 +70,11 @@ public final class RunnableReadWrite extends RunnableStoppable {
                     this.boas.reset();
                 }
                 this.connection.getOutboundPacketsQueue().clear();
+            }
+
+            if (this.connection.isDisconnecting()) {
+                this.stop();
+                this.connection.setDisconnecting(false);
             }
         }
         catch (Throwable e) {
