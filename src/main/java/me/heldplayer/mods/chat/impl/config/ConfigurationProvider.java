@@ -17,7 +17,11 @@ import java.util.UUID;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
 import me.heldplayer.chat.framework.config.ServerEntry;
+import me.heldplayer.chat.framework.logging.Log;
 import me.heldplayer.chat.framework.util.KeyUtils;
+import me.heldplayer.mods.chat.impl.logging.ForgeLog;
+
+import org.apache.logging.log4j.LogManager;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -31,6 +35,7 @@ public class ConfigurationProvider implements IServerConfiguration {
 
     private ServerConfiguration configuration;
     private KeyPair keypair;
+    protected static Log log = new ForgeLog(LogManager.getLogger("ServerChat"), "ServerChat");
 
     @Override
     public void load(File saveDir) {
@@ -83,7 +88,7 @@ public class ConfigurationProvider implements IServerConfiguration {
                 e.printStackTrace();
             }
             this.keypair = KeyUtils.keyGen.generateKeyPair();
-            System.out.println("Generated KeyPair");
+            ConfigurationProvider.log.info("Generated KeyPair");
         }
         else {
             DataInputStream in = null;
@@ -213,6 +218,11 @@ public class ConfigurationProvider implements IServerConfiguration {
     @Override
     public PublicKey getPublicKey() {
         return this.keypair.getPublic();
+    }
+
+    @Override
+    public Log getLog() {
+        return ConfigurationProvider.log;
     }
 
 }

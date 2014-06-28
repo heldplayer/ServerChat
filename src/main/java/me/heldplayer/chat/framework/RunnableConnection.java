@@ -22,7 +22,7 @@ public class RunnableConnection extends RunnableStoppable {
     public void doRun() {
         try {
             Socket socket = this.serverSocket.accept();
-            System.err.println("==================== Got connection!");
+            ConnectionsList.log.info("==================== Got connection!");
             LocalServer connection = new LocalServer(this.connectionsList, socket);
             this.connectionsList.addConnection(connection);
         }

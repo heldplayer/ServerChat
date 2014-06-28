@@ -3,7 +3,7 @@ package me.heldplayer.chat.framework.wrap;
 
 public abstract class RunnableStoppable implements Runnable {
 
-    private boolean running = true;;
+    private boolean running = true;
 
     @Override
     public final void run() {

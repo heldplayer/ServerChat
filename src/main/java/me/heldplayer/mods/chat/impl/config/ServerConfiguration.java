@@ -47,11 +47,11 @@ public class ServerConfiguration {
             entry.setPort(entryObj.get("port").getAsInt());
             entry.setUuid(UUID.fromString(entryObj.get("uuid").getAsString()));
             if (this.uuid.equals(entry.getUuid())) {
-                System.err.println("Skipping connection that has the same UUID as the server");
+                ConfigurationProvider.log.info("Skipping connection that has the same UUID as the server");
                 continue;
             }
             if (entry.getIp().isEmpty()) {
-                System.err.println("Skipping connection with uuid " + entry.getUuid() + " because the IP is missing");
+                ConfigurationProvider.log.info("Skipping connection with uuid %s because the IP is missing", entry.getUuid());
                 continue;
             }
             this.serverEntries.add(entry);

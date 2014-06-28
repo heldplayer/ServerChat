@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import me.heldplayer.chat.framework.ConnectionsList;
 import me.heldplayer.chat.framework.LocalServer;
 import me.heldplayer.chat.framework.config.ServerEntry;
 
@@ -19,16 +20,15 @@ class RunnableConsoleReader implements Runnable {
             while ((input = reader.readLine()) != null) {
                 if (input.equalsIgnoreCase("stop")) {
                     ConnectionTest.connections.stopListening();
-                    System.out.println("Stopped");
+                    ConnectionsList.log.info("Stopped");
                 }
                 else if (input.equalsIgnoreCase("save")) {
                     ConnectionTest.connections.save();
-                    ;
-                    System.out.println("Saved");
+                    ConnectionsList.log.info("Saved");
                 }
                 else if (input.equalsIgnoreCase("load")) {
                     ConnectionTest.connections.load();
-                    System.out.println("Loaded");
+                    ConnectionsList.log.info("Loaded");
                 }
                 else if (input.equalsIgnoreCase("connect")) {
                     System.err.print("Ip: ");
@@ -39,10 +39,10 @@ class RunnableConsoleReader implements Runnable {
                     entry.setIp(ip);
                     entry.setPort(Integer.parseInt(port));
                     ConnectionTest.connections.addConnection(new LocalServer(ConnectionTest.connections, entry));
-                    System.out.println("Connecting to " + ip + ":" + port);
+                    ConnectionsList.log.info("Connecting to " + ip + ":" + port);
                 }
                 else {
-                    System.out.println(input);
+                    ConnectionsList.log.info(input);
                 }
 
                 Thread.sleep(10L);

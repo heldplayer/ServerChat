@@ -43,7 +43,7 @@ public class PacketDisconnect extends ChatPacket {
 
     @Override
     public void onPacket(LocalServer connection) {
-        System.err.println("Server disconnected: " + this.reason);
+        connection.log.info("Server disconnected: %s", this.reason);
         connection.disconnectServer(null);
         if (this.kicked) {
             connection.connectionsList.removeServer(connection.getUuid());

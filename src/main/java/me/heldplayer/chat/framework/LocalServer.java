@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.heldplayer.chat.framework.auth.AuthenticationException;
 import me.heldplayer.chat.framework.config.ServerEntry;
+import me.heldplayer.chat.framework.logging.Log;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.packet.PacketDisconnect;
@@ -30,6 +31,8 @@ public class LocalServer extends Server {
     private boolean disconnecting;
     private Queue<ChatPacket> outboundPackets = new ConcurrentLinkedQueue<ChatPacket>();
 
+    public final Log log;
+
     public LocalServer(ConnectionsList connectionsList, Socket socket) throws IOException {
         this.connectionsList = connectionsList;
         this.setInOut(socket);
@@ -44,11 +47,14 @@ public class LocalServer extends Server {
             this.entry.setIp(ip[0]);
         }
 
+        this.log = ConnectionsList.log.getSubLog(this.entry.getIp());
+
         this.startThread();
     }
 
     public LocalServer(ConnectionsList connectionsList, ServerEntry entry) {
         this.connectionsList = connectionsList;
+        this.log = ConnectionsList.log.getSubLog(entry.getName());
 
         this.state = ConnectionState.CONNECTING;
         this.entry = entry;
@@ -67,7 +73,7 @@ public class LocalServer extends Server {
     }
 
     public void startThread() {
-        this.thread.start(new RunnableReadWrite(this), "ServerChat read/write thread");
+        this.thread.startDaemon(new RunnableReadWrite(this), "ServerChat read/write thread");
     }
 
     public ConnectionState getState() {
@@ -83,7 +89,7 @@ public class LocalServer extends Server {
                 throw new AuthenticationException(String.format("Bad transition of states, tried to go from %s to %s", this.state, state));
             }
         }
-        System.out.println(String.format("Transitioning state from %s to %s", this.state, state));
+        this.log.trace("Transitioning state from %s to %s", this.state, state);
         this.state = state;
     }
 
@@ -92,7 +98,7 @@ public class LocalServer extends Server {
     }
 
     public void disconnectServer(String reason) {
-        System.err.println("Disconnecting server for '" + reason + "'");
+        this.log.info("Disconnecting server for '%s'", reason);
         if (reason != null) {
             this.addPacket(new PacketDisconnect(reason, false));
         }
@@ -101,7 +107,7 @@ public class LocalServer extends Server {
     }
 
     public void kickServer(String reason) {
-        System.err.println("Kicking server for '" + reason + "'");
+        this.log.info("Kicking server for '%s'", reason);
         if (reason != null) {
             this.addPacket(new PacketDisconnect(reason, true));
         }

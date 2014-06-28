@@ -66,7 +66,7 @@ public class PacketRemoteServerConnected extends ChatPacket {
         boolean verified = ServerAuthentication.verifyIdentity(this.uuid, this.challenge, this.signature);
         if (verified) {
             RemoteServer remoteConnection = new RemoteServer(this.uuid);
-            System.out.println(String.format("Server with UUID %s connected remotely through %s", this.uuid, connection.getUuid()));
+            connection.log.debug("Server with UUID %s connected remotely through %s", this.uuid, connection.getUuid());
             connection.addRemoteConnection(remoteConnection);
             connection.connectionsList.broadcastRemoteConnection(connection, remoteConnection, this.challenge, this.signature);
         }

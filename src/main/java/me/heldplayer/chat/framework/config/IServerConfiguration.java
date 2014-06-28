@@ -7,6 +7,8 @@ import java.security.PublicKey;
 import java.util.List;
 import java.util.UUID;
 
+import me.heldplayer.chat.framework.logging.Log;
+
 public interface IServerConfiguration {
 
     void load(File file);
@@ -26,5 +28,7 @@ public interface IServerConfiguration {
     PrivateKey getPrivateKey();
 
     PublicKey getPublicKey();
+
+    Log getLog();
 
 }

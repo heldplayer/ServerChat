@@ -23,9 +23,13 @@ public final class RunnableReadWrite extends RunnableStoppable {
 
     @Override
     public void doRun() {
+        if (this.connection.isDisconnecting()) {
+            this.stop();
+        }
+
         try {
             if (this.connection.serverIO.isClosed()) {
-                System.out.println("Connection lost");
+                this.connection.log.info("Connection lost");
 
                 return;
             }
@@ -38,17 +42,15 @@ public final class RunnableReadWrite extends RunnableStoppable {
             // Read
             DataInputStream in = this.connection.serverIO.getIn();
             while (in.available() > 0) {
-                byte[] idBytes = new byte[in.readInt()];
-                in.readFully(idBytes);
-                String id = new String(idBytes);
+                String id = in.readUTF();
                 byte[] data = new byte[in.readInt()];
                 in.readFully(data);
 
-                System.out.println(" < Got packet id '" + id + "' (" + data.length + " bytes)");
+                this.connection.log.trace("< Got packet id '%s' (%s bytes)", id, data.length);
 
                 ChatPacket packet = this.connection.createPacket(id);
                 if (packet == null) {
-                    throw new RuntimeException("Bad packet in inbound (Id: " + id + "; State: " + this.connection.getState() + ")");
+                    throw new RuntimeException(String.format("Bad packet in inbound (Id: %s; State: %s)", id, this.connection.getState()));
                 }
                 DataInputStream dis;
                 packet.read(dis = new DataInputStream(new ByteArrayInputStream(data)));
@@ -64,14 +66,12 @@ public final class RunnableReadWrite extends RunnableStoppable {
                     String id = this.connection.getId(packet);
                     packet.write(this.dos);
 
-                    System.out.println(" > Sending packet id '" + id + "' (" + this.dos.size() + " bytes)");
+                    this.connection.log.trace("> Sending packet id '%s' (%s bytes)", id, this.dos.size());
 
                     if (id == null) {
-                        throw new RuntimeException("Bad packet in outbound (Type: " + packet.getClass() + "; State: " + this.connection.getState() + ")");
+                        throw new RuntimeException(String.format("Bad packet in outbound (Type: %s; State: %s)", packet.getClass(), this.connection.getState()));
                     }
-                    byte[] idBytes = id.getBytes();
-                    out.writeInt(idBytes.length);
-                    out.write(idBytes);
+                    out.writeUTF(id);
 
                     out.writeInt(this.boas.size());
                     out.write(this.boas.toByteArray(), 0, this.boas.size());
@@ -81,23 +81,25 @@ public final class RunnableReadWrite extends RunnableStoppable {
             }
         }
         catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-        finally {
-            this.stop();
-            this.connection.setDisconnecting(false);
-            this.connection.serverIO.close();
-
-            try {
-                this.dos.close();
-            }
-            catch (IOException e) {}
+            this.connection.disconnectServer("Error in connection: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     @Override
     public boolean shouldRun() {
         return super.shouldRun() || this.connection.isDisconnecting();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        this.connection.serverIO.close();
+
+        try {
+            this.dos.close();
+        }
+        catch (IOException e) {}
     }
 
 }

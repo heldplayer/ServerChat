@@ -65,13 +65,13 @@ public class PacketServerCredentials extends ChatPacket {
                     entry.setIp(this.host);
                 }
                 entry.setPort(this.port);
-                System.out.println("Added server " + entry.getUuid() + " (" + entry.getIp() + ":" + entry.getPort() + ")");
+                connection.log.trace("Added server %s (%s:%s)", entry.getUuid(), entry.getIp(), entry.getPort());
             }
             return;
         }
 
-        System.err.println("Server doesn't have an entry set?!");
-        System.out.println("Adding server " + this.uuid + " (" + this.host + ":" + this.port + ")");
+        connection.log.debug("Server doesn't have an entry set?!");
+        connection.log.debug("Adding server %s (%s:%s)", this.uuid, this.host, this.port);
         connection.entry = new ServerEntry();
         connection.entry.setUuid(this.uuid);
         connection.entry.setIp(this.host);

@@ -33,4 +33,13 @@ public final class ServerEntry {
         this.uuid = uuid;
     }
 
+    public String getName() {
+        if (this.uuid != null) {
+            return this.uuid.toString().substring(0, 8);
+        }
+        else {
+            return this.ip;
+        }
+    }
+
 }

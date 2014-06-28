@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.heldplayer.chat.framework.config.IServerConfiguration;
 import me.heldplayer.chat.framework.config.ServerEntry;
+import me.heldplayer.chat.framework.logging.Log;
 import me.heldplayer.chat.framework.packet.ChatPacket;
 import me.heldplayer.chat.framework.packet.ConnectionState;
 import me.heldplayer.chat.framework.packet.auth.PacketServerCredentials;
@@ -38,11 +39,13 @@ public class ConnectionsList {
 
     private ByteArrayOutputStream boas = new ByteArrayOutputStream(32768);
     private DataOutputStream dos = new DataOutputStream(this.boas);
+    public static Log log;
 
     public ConnectionsList(IServerConfiguration config, File saveDir) {
         if (config.isOfflineMode()) {
             throw new RuntimeException("Mod is not supported in offline mode!");
         }
+        ConnectionsList.log = config.getLog();
         this.saveDir = saveDir;
 
         this.connections = new ConcurrentLinkedQueue<LocalServer>();
@@ -212,11 +215,11 @@ public class ConnectionsList {
                 continue;
             }
 
-            System.out.println(String.format("Telling %s about locally connected server %s", connection.getUuid(), currServerConnection.getUuid()));
+            connection.log.debug("Telling %s about locally connected server %s", connection.getUuid(), currServerConnection.getUuid());
             currServerConnection.addPacket(new PacketChallengeRequest(currServerConnection.getUuid(), connection.getUuid()));
 
             // Also tell the other servers about the new server
-            System.out.println(String.format("Telling locally connected server %s about %s", currServerConnection.getUuid(), connection.getUuid()));
+            connection.log.debug("Telling locally connected server %s about %s", currServerConnection.getUuid(), connection.getUuid());
             connection.addPacket(new PacketChallengeRequest(connection.getUuid(), currServerConnection.getUuid()));
 
             for (RemoteServer currRemoteConnection : currServerConnection.getRemoteConnections()) {
@@ -224,7 +227,7 @@ public class ConnectionsList {
                     continue;
                 }
 
-                System.out.println(String.format("Telling %s about remotely connected server %s", connection.getUuid(), currServerConnection.getUuid()));
+                connection.log.debug("Telling %s about remotely connected server %s", connection.getUuid(), currServerConnection.getUuid());
 
                 currServerConnection.addPacket(new PacketChallengeRequest(currRemoteConnection.getUuid(), connection.getUuid()));
             }
