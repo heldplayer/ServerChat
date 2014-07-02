@@ -18,7 +18,7 @@ public class ServerIOWrapper {
     public static Log log = ConnectionsList.log.getSubLog("IO");
 
     public void close() {
-        log.debug("Closing socket %s (%s)", this.socket, this);
+        ServerIOWrapper.log.debug("Closing socket %s (%s)", this.socket, this);
         if (this.socket != null) {
             try {
                 this.socket.close();
@@ -52,7 +52,7 @@ public class ServerIOWrapper {
         if (this.socket != socket) {
             this.close();
         }
-        log.debug("Setting socket %s (%s)", socket, this);
+        ServerIOWrapper.log.debug("Setting socket %s (%s)", socket, this);
         this.socket = socket;
         this.in = new DataInputStream(socket.getInputStream());
         this.out = new DataOutputStream(socket.getOutputStream());
