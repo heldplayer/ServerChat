@@ -1,20 +1,15 @@
-
 package me.heldplayer.mods.chat;
 
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.Mod.EventHandler;
+import cpw.mods.fml.common.Mod.Instance;
+import cpw.mods.fml.common.SidedProxy;
+import cpw.mods.fml.common.event.*;
 import net.specialattack.forge.core.ModInfo;
 import net.specialattack.forge.core.SpACoreMod;
 import net.specialattack.forge.core.SpACoreProxy;
 import net.specialattack.forge.core.config.Config;
 import net.specialattack.forge.core.packet.PacketHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPostInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.event.FMLServerStartedEvent;
-import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
 @Mod(modid = Objects.MOD_ID, name = Objects.MOD_NAME)
 public class ModServerChat extends SpACoreMod {
@@ -44,18 +39,6 @@ public class ModServerChat extends SpACoreMod {
         //this.config.addConfigKey(hideTechnicalBlocks);
 
         super.preInit(event);
-    }
-
-    @Override
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
-        super.init(event);
-    }
-
-    @Override
-    @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
-        super.postInit(event);
     }
 
     @Override
