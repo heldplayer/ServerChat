@@ -1,17 +1,20 @@
-[
 {
-  "modid" : "serverchat",
-  "name" : "ServerChat",
-  "version" : "@VERSION@",
-  "credits" : "",
-  "authors": [
-    "heldplayer"
-  ],
-  "description": "Connects servers to allow inter-server communications",
-  "updateUrl" : "",
-  "url" : "",
-  "requiredMods": [
-    "HeldCore"
-  ]
+    "modListVersion" : 2,
+    "modList" : [
+        {
+            "modid" : "serverchat",
+            "name" : "ServerChat",
+            "description" : "Connects servers to allow inter-server communications",
+            "version" : "${version}",
+            "mcversion" : "${minecraft_version}",
+            "authorList" : [
+                "heldplayer"
+            ],
+            "url" : "",
+            "useDependencyInformation" : true,
+            "requiredMods" : [ "spacoreforge", "spacore" ],
+            "dependencies" : [ "spacore" ],
+            "dependants" : []
+        }
+    ]
 }
-]
